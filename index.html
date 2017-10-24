@@ -1,0 +1,265 @@
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+  <link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css" />
+  <script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
+  <script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
+
+  <script src="KaitaiStream.js" type="text/javascript"></script>
+  <script src="Optionstest.js" type="text/javascript"></script>
+  <script src="ToiTypes.js" type="text/javascript"></script>
+  <script src="TOI.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+
+  //
+  var sendUpdate = true;
+
+  //----------------------------------------------------
+  // add parameter
+  var addUI = function(parameter) {
+
+    switch (parameter.type.typeid) {
+      case ToiTypes.Datatype.BOOL:
+      {
+        var box = createCheckBox(parameter.id);
+
+        updateParam(parameter);
+
+        if (parameter.value != null) {
+          $("#param-" + parameter.id).prop('checked', parameter.value).checkboxradio('refresh');
+        }
+
+        // last setup value Callback
+        var id = parameter.id;
+        $("#param-"+id).change(function() {
+          valueChange(id, $("#param-"+id).prop("checked"));
+        });
+      }
+        break;
+
+        // create toggle
+      case ToiTypes.Datatype.INT8:
+      case ToiTypes.Datatype.UINT8:
+      case ToiTypes.Datatype.INT16:
+      case ToiTypes.Datatype.UINT16:
+      case ToiTypes.Datatype.INT32:
+      case ToiTypes.Datatype.UINT32:
+      case ToiTypes.Datatype.INT64:
+      case ToiTypes.Datatype.UINT64:
+      case ToiTypes.Datatype.FLOAT32:
+      case ToiTypes.Datatype.FLOAT64:
+      {
+        var box;
+        if (parameter.type.min != null && parameter.type.max != null) {
+          box = createSlider(parameter.id);
+
+          var input = $("#param-" + parameter.id);
+
+          input.attr("min", parameter.type.min);
+          input.attr("max", parameter.type.max);
+
+          if (parameter.type.multipleof != null) {
+            input.attr("step", parameter.type.multipleof);
+          }
+
+          if (parameter.type.unit != null) {
+            alert("unit: " + parameter.type.unit);
+          }
+
+          updateParam(parameter);
+
+          // input.slider().slider('refresh');
+
+        } else {
+          box = createNumberBox(parameter.id);
+          updateParam(parameter);
+        }
+
+        // last value CB
+        var id = parameter.id;
+        $("#param-"+id).change(function() {
+          valueChange(id, $("#param-"+id).val());
+        });
+      }
+        break;
+
+      case ToiTypes.Datatype.TSTR:
+      case ToiTypes.Datatype.SSTR:
+      case ToiTypes.Datatype.LSTR:
+      {
+        var box = createTextBox(parameter.id);
+        updateParam(parameter);
+
+        // last value CB
+        var id = parameter.id;
+        $("#param-"+id).change(function() {
+          valueChange(id, $("#param-"+id).val());
+        });
+        break;
+      }
+
+      default:
+        console.log("no such type...");
+    }
+  };
+
+  //----------------------------------------------------
+  // udpate a parameter
+  var updateParam = function(parameter) {
+
+    // don't send variable back on updateParam
+    // ugly hack - do this differently
+    sendUpdate = false;
+
+    var input = $('#param-'+parameter.id);
+
+    if (parameter.value != null) {
+      input.val(parameter.value);
+
+      if (input.checkboxradio != null) {
+        input.prop('checked', parameter.value);
+      }
+    }
+
+    if (parameter.label) {
+      var label = $('#label-'+parameter.id);
+      label.text(parameter.label + ":");
+    }
+
+    if (parameter.description) {
+      console.log("update description: " + parameter.description);
+    }
+
+    if (parameter.order) {
+      console.log("update order: " + parameter.order);
+    }
+
+
+    // we are using jquery mobile, need to update the widget
+    // this will initially fail -> use try-catch to avoid exception on init
+
+    // update slider
+    try {
+      if (input.slider != null) {
+        input.slider('refresh');
+      }
+    } catch(err) {
+      //nop
+    }
+
+    // update checkbox
+    try {
+      if (input.checkboxradio != null) {
+        input.checkboxradio('refresh');
+      }
+    } catch(err) {
+      //nop
+    }
+
+    // done
+    sendUpdate = true;
+  };
+
+  //----------------------------------------------------
+  // remove a parameter
+  var removeParam = function(parameter) {
+    $("#content .cbGroup" + parameter.id).remove();
+  };
+
+
+  function valueChange(id, value) {
+    if (!sendUpdate) {
+      return;
+    }
+
+    client.valueUpdate(id, value);
+  }
+
+  //----------------------------------------------------
+  //----------------------------------------------------
+  // ui creator
+  //----------------------------------------------------
+  //----------------------------------------------------
+  function createCheckBox(id) {
+
+    console.log("create checkbox: " + id);
+
+    var newSet = '<fieldset data-role="controlgroup" class="cbGroup' + id + '"></fieldset>';
+    $('#content').append(newSet);
+
+    var newBox = $('<input type="checkbox" name="param-' + id + '" id="param-' + id + '" class="custom" /> <label for="param-'+ id + '" id="label-' + id + '">I agree</label>');
+    $("#content .cbGroup" + id).append(newBox).trigger('create');
+    $('<hr>').appendTo( "#content .cbGroup" + id )
+
+    return newBox;
+  }
+
+  function createSlider(id) {
+
+    console.log("create slider: " + id);
+
+    var newSet = '<fieldset data-role="controlgroup" class="cbGroup' + id + '"></fieldset>';
+    $('#content').append(newSet);
+
+    var newBox = $('<label for="param-' + id + '" id="label-' + id + '" > slider: </label> <input id="param-' + id + '" type="number" data-type="range" data-highlight="true" min="0" max="100" step="1" value="0">');
+    $("#content .cbGroup" + id).append(newBox).trigger('create');
+    $('<hr>').appendTo( "#content .cbGroup" + id )
+
+    return newBox;
+  }
+
+  function createNumberBox(id) {
+
+    console.log("create numberbox: " + id);
+
+    var newSet = '<fieldset data-role="controlgroup" class="cbGroup' + id + '"></fieldset>';
+    $('#content').append(newSet);
+
+    var newBox = $('<label for="param-' + id + '" id="label-' + id + '" > Number: </label> <input type="number" data-clear-btn="false" name="param-'+ id +'" id="param-' + id + '" value="0" />');
+    $("#content .cbGroup" + id).append(newBox).trigger('create');
+    $('<hr>').appendTo( "#content .cbGroup" + id )
+
+    return newBox;
+  }
+
+  function createTextBox(id) {
+
+    console.log("create textbox: " + id);
+
+    var newSet = '<fieldset data-role="controlgroup" class="cbGroup' + id + '"></fieldset>';
+    $('#content').append(newSet);
+
+    var newBox = $('<label for="param-' + id + '" id="label-' + id + '" > Text: </label> <input type="text" name="param-'+id+'" id="param-'+id+'" value="">');
+    $("#content .cbGroup" + id).append(newBox).trigger('create');
+    $('<hr>').appendTo( "#content .cbGroup" + id );
+
+    return newBox;
+  }
+</script>
+
+<script type="text/javascript">
+  // create a client
+  var client = new ToiClient();
+
+  // set callback functions
+  client.add = addUI;
+  client.update = updateParam;
+  client.remove = removeParam;
+
+  // open a connection to server
+  client.open("localhost", 10000);
+</script>
+
+</head>
+
+<body>
+
+<!-- content container-->
+<div id="content" style="margin:10px;">
+</div>
+
+
+</body>
+</html>
