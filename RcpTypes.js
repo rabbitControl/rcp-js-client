@@ -1,13 +1,37 @@
 // This is a generated file! Please edit source .ksy file and use kaitai-struct-compiler to rebuild
 
 var RcpTypes = (function() {
-  RcpTypes.StringProperty = Object.freeze({
+  RcpTypes.EnumOptions = Object.freeze({
+    DEFAULT: 48,
+    ENTRIES: 49,
+
+    48: "DEFAULT",
+    49: "ENTRIES",
+  });
+
+  RcpTypes.WidgetOptions = Object.freeze({
+    TYPE: 80,
+    ENABLED: 81,
+    VISIBLE: 82,
+    LABEL_VISIBLE: 83,
+    VALUE_VISIBLE: 84,
+    LABEL_POSITION: 85,
+
+    80: "TYPE",
+    81: "ENABLED",
+    82: "VISIBLE",
+    83: "LABEL_VISIBLE",
+    84: "VALUE_VISIBLE",
+    85: "LABEL_POSITION",
+  });
+
+  RcpTypes.ColorOptions = Object.freeze({
     DEFAULT: 48,
 
     48: "DEFAULT",
   });
 
-  RcpTypes.Parameter = Object.freeze({
+  RcpTypes.ParameterOptions = Object.freeze({
     VALUE: 32,
     LABEL: 33,
     DESCRIPTION: 34,
@@ -25,43 +49,35 @@ var RcpTypes = (function() {
     38: "USERDATA",
   });
 
-  RcpTypes.DynamicArrayProperty = Object.freeze({
+  RcpTypes.VectorOptions = Object.freeze({
+    DEFAULT: 48,
+    MINIMUM: 49,
+    MAXIMUM: 50,
+    MULTIPLEOF: 51,
+    SCALE: 52,
+    UNIT: 53,
+
+    48: "DEFAULT",
+    49: "MINIMUM",
+    50: "MAXIMUM",
+    51: "MULTIPLEOF",
+    52: "SCALE",
+    53: "UNIT",
+  });
+
+  RcpTypes.CompoundOptions = Object.freeze({
     DEFAULT: 48,
 
     48: "DEFAULT",
   });
 
-  RcpTypes.BooleanProperty = Object.freeze({
+  RcpTypes.BooleanOptions = Object.freeze({
     DEFAULT: 48,
 
     48: "DEFAULT",
   });
 
-  RcpTypes.EnumProperty = Object.freeze({
-    DEFAULT: 48,
-    ENTRIES: 49,
-
-    48: "DEFAULT",
-    49: "ENTRIES",
-  });
-
-  RcpTypes.Widget = Object.freeze({
-    TYPE: 80,
-    ENABLED: 81,
-    VISIBLE: 82,
-    LABEL_VISIBLE: 83,
-    VALUE_VISIBLE: 84,
-    LABEL_POSITION: 85,
-
-    80: "TYPE",
-    81: "ENABLED",
-    82: "VISIBLE",
-    83: "LABEL_VISIBLE",
-    84: "VALUE_VISIBLE",
-    85: "LABEL_POSITION",
-  });
-
-  RcpTypes.WidgetType = Object.freeze({
+  RcpTypes.Widgettype = Object.freeze({
     TEXTBOX: 16,
     NUMBERBOX: 17,
     BUTTON: 18,
@@ -87,12 +103,6 @@ var RcpTypes = (function() {
     25: "TREEVIEW",
     26: "DROPDOWN",
     31: "XYFIELD",
-  });
-
-  RcpTypes.CompoundProperty = Object.freeze({
-    DEFAULT: 48,
-
-    48: "DEFAULT",
   });
 
   RcpTypes.Command = Object.freeze({
@@ -123,7 +133,7 @@ var RcpTypes = (function() {
     2: "EXP2",
   });
 
-  RcpTypes.FixedArrayProperty = Object.freeze({
+  RcpTypes.DynamicArrayOptions = Object.freeze({
     DEFAULT: 48,
 
     48: "DEFAULT",
@@ -143,36 +153,10 @@ var RcpTypes = (function() {
     4: "CENTER",
   });
 
-  RcpTypes.VectorProperty = Object.freeze({
-    DEFAULT: 48,
-    MINIMUM: 49,
-    MAXIMUM: 50,
-    MULTIPLEOF: 51,
-    SCALE: 52,
-    UNIT: 53,
-
-    48: "DEFAULT",
-    49: "MINIMUM",
-    50: "MAXIMUM",
-    51: "MULTIPLEOF",
-    52: "SCALE",
-    53: "UNIT",
-  });
-
-  RcpTypes.ColorProperty = Object.freeze({
+  RcpTypes.StringOptions = Object.freeze({
     DEFAULT: 48,
 
     48: "DEFAULT",
-  });
-
-  RcpTypes.Metadata = Object.freeze({
-    VERSION: 26,
-    CAPABILITIES: 27,
-    COMMANDS: 28,
-
-    26: "VERSION",
-    27: "CAPABILITIES",
-    28: "COMMANDS",
   });
 
   RcpTypes.Datatype = Object.freeze({
@@ -182,7 +166,7 @@ var RcpTypes = (function() {
     INT16: 19,
     UINT16: 20,
     INT32: 21,
-    U_INT32: 22,
+    UINT32: 22,
     INT64: 23,
     UINT64: 24,
     FLOAT32: 25,
@@ -225,7 +209,7 @@ var RcpTypes = (function() {
     19: "INT16",
     20: "UINT16",
     21: "INT32",
-    22: "U_INT32",
+    22: "UINT32",
     23: "INT64",
     24: "UINT64",
     25: "FLOAT32",
@@ -263,17 +247,7 @@ var RcpTypes = (function() {
     58: "COMPOUND",
   });
 
-  RcpTypes.Packet = Object.freeze({
-    ID: 16,
-    TIMESTAMP: 17,
-    DATA: 18,
-
-    16: "ID",
-    17: "TIMESTAMP",
-    18: "DATA",
-  });
-
-  RcpTypes.NumberProperty = Object.freeze({
+  RcpTypes.NumberOptions = Object.freeze({
     DEFAULT: 48,
     MINIMUM: 49,
     MAXIMUM: 50,
@@ -287,6 +261,32 @@ var RcpTypes = (function() {
     51: "MULTIPLEOF",
     52: "SCALE",
     53: "UNIT",
+  });
+
+  RcpTypes.MetadataOptions = Object.freeze({
+    VERSION: 26,
+    CAPABILITIES: 27,
+    COMMANDS: 28,
+
+    26: "VERSION",
+    27: "CAPABILITIES",
+    28: "COMMANDS",
+  });
+
+  RcpTypes.PacketOptions = Object.freeze({
+    ID: 16,
+    TIMESTAMP: 17,
+    DATA: 18,
+
+    16: "ID",
+    17: "TIMESTAMP",
+    18: "DATA",
+  });
+
+  RcpTypes.FixedArrayOptions = Object.freeze({
+    DEFAULT: 48,
+
+    48: "DEFAULT",
   });
 
   function RcpTypes(_io, _parent, _root) {

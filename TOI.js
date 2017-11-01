@@ -629,7 +629,7 @@ TOIPacketDecoder.prototype._parsePacket = function(_io) {
     }
 
     switch (dataid) {
-      case RcpTypes.Packet.DATA:
+      case RcpTypes.PacketOptions.DATA:
 
         if (packet.data != null) {
             throw "already has data...";
@@ -658,7 +658,7 @@ TOIPacketDecoder.prototype._parsePacket = function(_io) {
 
         break;
 
-      case RcpTypes.Packet.ID:
+      case RcpTypes.PacketOptions.ID:
         packet.packetId = _io.readU4be();
         if (TOIVerbose) console.log("packet id: " + packet.packetId);
         break;
@@ -701,38 +701,38 @@ TOIPacketDecoder.prototype._parseParameter = function(_io) {
     }
 
     switch (dataid) {
-      case RcpTypes.Parameter.VALUE:
+      case RcpTypes.ParameterOptions.VALUE:
         parameter.value = _readTypedValue(type.typeid, _io);
         if (TOIVerbose) console.log("parameter value:  " + parameter.value);
         break;
 
-      case RcpTypes.Parameter.LABEL:
+      case RcpTypes.ParameterOptions.LABEL:
         parameter.label = _readTypedValue(RcpTypes.Datatype.TINY_STRING, _io);
         if (TOIVerbose) console.log("parameter label: " + parameter.label);
         break;
 
-      case RcpTypes.Parameter.DESCRIPTION:
+      case RcpTypes.ParameterOptions.DESCRIPTION:
         parameter.description = _readTypedValue(RcpTypes.Datatype.SHORT_STRING, _io);
         if (TOIVerbose) console.log("parameter desc: " + parameter.description);
         break;
 
-      case RcpTypes.Parameter.ORDER:
+      case RcpTypes.ParameterOptions.ORDER:
         parameter.order = _io.readS4be();
         if (TOIVerbose) console.log("parameter order: " + parameter.order);
         break;
 
-      case RcpTypes.Parameter.PARENT:
+      case RcpTypes.ParameterOptions.PARENT:
         // skip...
         parameter.parent = _io.readU4be();
         if (TOIVerbose) console.log("parameter order: " + parameter.order);
         break;
 
-      case RcpTypes.Parameter.WIDGET:
+      case RcpTypes.ParameterOptions.WIDGET:
         // skip...
         console.log("widget not implemented");
         break;
 
-      case RcpTypes.Parameter.USERDATA:
+      case RcpTypes.ParameterOptions.USERDATA:
         var ud = new RcpTypes.Userdata(_io);
         parameter.userdata = ud.data;
         if (TOIVerbose) console.log("userdata set");
@@ -816,7 +816,7 @@ TOIPacketDecoder.prototype._parseTypeDefault = function(_type, _io) {
 
     switch (dataid) {
 
-      case RcpTypes.StringProperty.DEFAULT:
+      case RcpTypes.StringOptions.DEFAULT:
         type.defaultValue = _readTypedValue(_type.typeid, _io);
         if (TOIVerbose) console.log("parse default, default: " + type.defaultValue);
         break;
@@ -853,29 +853,29 @@ TOIPacketDecoder.prototype._parseTypeNumber = function(_type, _io) {
 
     switch (dataid) {
 
-      case RcpTypes.NumberProperty.DEFAULT:
+      case RcpTypes.NumberOptions.DEFAULT:
         type.defaultValue = _readTypedValue(_type.typeid, _io);
         if (TOIVerbose) console.log("number default: " + type.defaultValue);
         break;
-      case RcpTypes.NumberProperty.MINIMUM:
+      case RcpTypes.NumberOptions.MINIMUM:
         type.min = _readTypedValue(_type.typeid, _io);
         if (TOIVerbose) console.log("number min: " + type.min);
         break;
-      case RcpTypes.NumberProperty.MAXIMUM:
+      case RcpTypes.NumberOptions.MAXIMUM:
         type.max = _readTypedValue(_type.typeid, _io);
         if (TOIVerbose) console.log("number max: " + type.max);
         break;
-      case RcpTypes.NumberProperty.MULTIPLEOF:
+      case RcpTypes.NumberOptions.MULTIPLEOF:
         type.multipleof = _readTypedValue(_type.typeid, _io);
         if (TOIVerbose) console.log("number mult: " + type.multipleof);
         break;
 
-      case RcpTypes.NumberProperty.SCALE:
+      case RcpTypes.NumberOptions.SCALE:
         type.scale = _io.readU1();
         if (TOIVerbose) console.log("number scale: " + type.scale);
         break;
 
-      case RcpTypes.NumberProperty.UNIT:
+      case RcpTypes.NumberOptions.UNIT:
         var tinyString = new RcpTypes.TinyString(_io);
         type.unit = tinyString.data;
         if (TOIVerbose) console.log("number unit: " + type.unit);
@@ -916,17 +916,17 @@ ToiPacket.prototype.write = function(_array) {
 
   // write optionals
   if (this.packetId != null) {
-    array.push(RcpTypes.Packet.ID);
+    array.push(RcpTypes.PacketOptions.ID);
     pushIn32ToArrayBe(this.packetId, array);
   }
 
   if (this.timestamp != null) {
-    array.push(RcpTypes.Packet.TIMESTAMP);
+    array.push(RcpTypes.PacketOptions.TIMESTAMP);
     pushFloat64ToArrayBe(this.timestamp, array);
   }
 
   if (this.data != null) {
-    array.push(RcpTypes.Packet.DATA);
+    array.push(RcpTypes.PacketOptions.DATA);
     array = this.data.write(array);
   }
 
@@ -985,37 +985,37 @@ ToiParameter.prototype.write = function(array) {
 
   // write optionals
   if (this.value != null) {
-    array.push(RcpTypes.Parameter.VALUE);
+    array.push(RcpTypes.ParameterOptions.VALUE);
     array = _writeTypedValue(this.type.typeid, this.value, array);
   }
 
   if (this.label != null) {
-    array.push(RcpTypes.Parameter.LABEL);
+    array.push(RcpTypes.ParameterOptions.LABEL);
     array = writeTinyString(this.label, array);
   }
 
   if (this.description != null) {
-    array.push(RcpTypes.Parameter.DESCRIPTION);
+    array.push(RcpTypes.ParameterOptions.DESCRIPTION);
     array = writeShortString(this.description, array);
   }
 
   if (this.order != null) {
-    array.push(RcpTypes.Parameter.ORDER);
+    array.push(RcpTypes.ParameterOptions.ORDER);
     pushIn32ToArrayBe(this.order, array);
   }
 
   if (this.parent != null) {
-    array.push(RcpTypes.Parameter.PARENT);
+    array.push(RcpTypes.ParameterOptions.PARENT);
     pushIn32ToArrayBe(this.parent, array);
   }
 
   if (this.widget != null) {
-    //array.push(RcpTypes.Parameter.WIDGET);
+    //array.push(RcpTypes.ParameterOptions.WIDGET);
     console.log("widget ignored for now");
   }
 
   if (this.userdata != null) {
-    array.push(RcpTypes.Parameter.USERDATA);
+    array.push(RcpTypes.ParameterOptions.USERDATA);
     pushIn32ToArrayBe(this.userdata.length, array);
 
     var userarray = [].slice.call(this.userdata);
@@ -1200,7 +1200,7 @@ ToiTypeDefinition.prototype.write = function(array) {
 ToiTypeDefinition.prototype._writeBoolean = function(array) {
 
   if (this.defaultValue != null) {
-    array.push(RcpTypes.BooleanProperty.DEFAULT);
+    array.push(RcpTypes.BooleanOptions.DEFAULT);
     array.push(this.defaultValue);
   }
 
@@ -1210,7 +1210,7 @@ ToiTypeDefinition.prototype._writeBoolean = function(array) {
 ToiTypeDefinition.prototype._writeString = function(array) {
 
   if (this.defaultValue != null) {
-    array.push(RcpTypes.StringProperty.DEFAULT);
+    array.push(RcpTypes.StringOptions.DEFAULT);
 
     array = writeLongString(this.defaultValue, array);
   }
@@ -1221,32 +1221,32 @@ ToiTypeDefinition.prototype._writeString = function(array) {
 ToiTypeDefinition.prototype._writeNumber = function(array) {
 
   if (this.defaultValue != null) {
-    array.push(RcpTypes.NumberProperty.DEFAULT);
+    array.push(RcpTypes.NumberOptions.DEFAULT);
     array = _writeTypedValue(this.typeid, this.defaultValue, array);
   }
 
   if (this.min != null) {
-    array.push(RcpTypes.NumberProperty.MINIMUM);
+    array.push(RcpTypes.NumberOptions.MINIMUM);
     array = _writeTypedValue(this.typeid, this.min, array);
   }
 
   if (this.max != null) {
-    array.push(RcpTypes.NumberProperty.MAXIMUM);
+    array.push(RcpTypes.NumberOptions.MAXIMUM);
     array = _writeTypedValue(this.typeid, this.max, array);
   }
 
   if (this.multipleof != null) {
-    array.push(RcpTypes.NumberProperty.MULTIPLEOF);
+    array.push(RcpTypes.NumberOptions.MULTIPLEOF);
     array = _writeTypedValue(this.typeid, this.multipleof, array);
   }
 
   if (this.scale != null) {
-    array.push(RcpTypes.NumberProperty.SCALE);
+    array.push(RcpTypes.NumberOptions.SCALE);
     array.push(this.scale);
   }
 
   if (this.unit != null) {
-    array.push(RcpTypes.NumberProperty.UNIT);
+    array.push(RcpTypes.NumberOptions.UNIT);
     // write as tiny string
     array = writeTinyString(this.unit, array);
   }
