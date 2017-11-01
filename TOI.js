@@ -805,6 +805,10 @@ TOIPacketDecoder.prototype._parseTypeDefault = function(_type, _io) {
     return;
   }
 
+  var type = _type;
+
+  if (TOIVerbose) console.log("parse default options");
+
   // parse optionals
   while (true) {
 
