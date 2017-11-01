@@ -1,7 +1,7 @@
 
 // flag to control some verbose logging
 var TOIVerbose = false;
-
+var TERMINATOR = 0;
 
 pushFloat64ToArrayBe = function(num, array) {
 
@@ -112,40 +112,40 @@ _readTypedValue = function(_typeid, _io) {
 
   switch (_typeid) {
 
-    case ToiTypes.Datatype.BOOL:
+    case RcpTypes.Datatype.BOOLEAN:
         return _io.readU1() > 0;
 
     // number types
-    case ToiTypes.Datatype.INT8:
+    case RcpTypes.Datatype.INT8:
         return _io.readS1();
-    case ToiTypes.Datatype.UINT8:
+    case RcpTypes.Datatype.UINT8:
         return _io.readU1();
-    case ToiTypes.Datatype.INT16:
+    case RcpTypes.Datatype.INT16:
         return _io.readS2be();
-    case ToiTypes.Datatype.UINT16:
+    case RcpTypes.Datatype.UINT16:
         return _io.readU2be();
-    case ToiTypes.Datatype.INT32:
+    case RcpTypes.Datatype.INT32:
         return _io.readS4be();
-    case ToiTypes.Datatype.UINT32:
+    case RcpTypes.Datatype.UINT32:
         return _io.readU4be();
-    case ToiTypes.Datatype.INT64:
+    case RcpTypes.Datatype.INT64:
         return _io.readS8be();
-    case ToiTypes.Datatype.UINT64:
+    case RcpTypes.Datatype.UINT64:
         return _io.readU8be();
-    case ToiTypes.Datatype.FLOAT32:
+    case RcpTypes.Datatype.FLOAT32:
         return _io.readF4be();
-    case ToiTypes.Datatype.FLOAT64:
+    case RcpTypes.Datatype.FLOAT64:
         return _io.readF8be();
 
     // string
-    case ToiTypes.Datatype.TSTR:
-      var strObj = new ToiTypes.TinyString(_io);
+    case RcpTypes.Datatype.TINY_STRING:
+      var strObj = new RcpTypes.TinyString(_io);
       return strObj.data;
-    case ToiTypes.Datatype.SSTR:
-      var strObj = new ToiTypes.ShortString(_io);
+    case RcpTypes.Datatype.SHORT_STRING:
+      var strObj = new RcpTypes.ShortString(_io);
       return strObj.data;
-    case ToiTypes.Datatype.LSTR:
-      var strObj = new ToiTypes.LongString(_io);
+    case RcpTypes.Datatype.STRING:
+      var strObj = new RcpTypes.LongString(_io);
       return strObj.data;
   }
 
@@ -156,40 +156,40 @@ _writeTypedValue = function(_typeid, value, array) {
 
   switch (_typeid) {
 
-    case ToiTypes.Datatype.BOOL:
+    case RcpTypes.Datatype.BOOLEAN:
       array.push(value > 0);
       break;
 
     // number types
-    case ToiTypes.Datatype.INT8:
-    case ToiTypes.Datatype.UINT8:
+    case RcpTypes.Datatype.INT8:
+    case RcpTypes.Datatype.UINT8:
       array.push(value);
       break;
-    case ToiTypes.Datatype.INT16:
-    case ToiTypes.Datatype.UINT16:
+    case RcpTypes.Datatype.INT16:
+    case RcpTypes.Datatype.UINT16:
       pushIn16ToArrayBe(value, array);
       break;
-    case ToiTypes.Datatype.INT32:
-    case ToiTypes.Datatype.UINT32:
+    case RcpTypes.Datatype.INT32:
+    case RcpTypes.Datatype.UINT32:
       pushIn32ToArrayBe(value, array);
       break;
-    case ToiTypes.Datatype.INT64:
-    case ToiTypes.Datatype.UINT64:
+    case RcpTypes.Datatype.INT64:
+    case RcpTypes.Datatype.UINT64:
       pushFloat64ToArrayBe(value, array);
       break;
-    case ToiTypes.Datatype.FLOAT32:
+    case RcpTypes.Datatype.FLOAT32:
       pushFloat64ToArrayBe(value, array);
       break;
-    case ToiTypes.Datatype.FLOAT64:
+    case RcpTypes.Datatype.FLOAT64:
       pushFloat64ToArrayBe(value, array);
       break;
 
     // string
-    case ToiTypes.Datatype.TSTR:
+    case RcpTypes.Datatype.TINY_STRING:
       break;
-    case ToiTypes.Datatype.SSTR:
+    case RcpTypes.Datatype.SHORT_STRING:
       break;
-    case ToiTypes.Datatype.LSTR:
+    case RcpTypes.Datatype.STRING:
       array = writeLongString(value, array);
       break;
   }
@@ -291,7 +291,7 @@ ToiClient.prototype.sendUpdate = function(parameter) {
     return;
   }
 
-  var packet = new ToiPacket(ToiTypes.Command.UPDATE);
+  var packet = new ToiPacket(RcpTypes.Command.UPDATE);
   packet.data = parameter;
 
   var arraybuffer = new Uint8Array(packet.write());
@@ -433,7 +433,7 @@ TOISocket.prototype._onopen = function(e) {
 
   // TODO send init data...
   // 04 0F 05 09 01
-  var data = new Uint8Array([ToiTypes.Command.INIT]);
+  var data = new Uint8Array([RcpTypes.Command.INITIALIZE]);
   this.send(data);
 
   if (this._.onopen) {
@@ -575,25 +575,25 @@ TOIPacketDecoder.prototype._receive = function(arraybuffer) {
     var packet = this._parsePacket(_io);
 
     switch (packet.command) {
-      case ToiTypes.Command.VERSION:
+      case RcpTypes.Command.VERSION:
         //
         break;
-      case ToiTypes.Command.INIT:
+      case RcpTypes.Command.INITIALIZE:
         if (this._packetListener != null) {
           this._packetListener._init(packet);
         }
         break;
-      case ToiTypes.Command.ADD:
+      case RcpTypes.Command.ADD:
         if (this._packetListener != null) {
           this._packetListener._add(packet.data);
         }
         break;
-      case ToiTypes.Command.UPDATE:
+      case RcpTypes.Command.UPDATE:
         if (this._packetListener != null) {
           this._packetListener._update(packet.data);
         }
         break;
-      case ToiTypes.Command.REMOVE:
+      case RcpTypes.Command.REMOVE:
         if (this._packetListener != null) {
           this._packetListener._remove(packet.data);
         }
@@ -624,32 +624,32 @@ TOIPacketDecoder.prototype._parsePacket = function(_io) {
 
     var dataid = _io.readU1();
 
-    if (dataid == ToiTypes.Packet.TERMINATOR) {
+    if (dataid == TERMINATOR) {
       break;
     }
 
     switch (dataid) {
-      case ToiTypes.Packet.DATA:
+      case RcpTypes.Packet.DATA:
 
         if (packet.data != null) {
             throw "already has data...";
         }
 
         switch (cmd) {
-          case ToiTypes.Command.INIT:
+          case RcpTypes.Command.INITIALIZE:
             // init - ignore any data...
             break;
 
-          case ToiTypes.Command.ADD:
-          case ToiTypes.Command.REMOVE:
-          case ToiTypes.Command.UPDATE:
+          case RcpTypes.Command.ADD:
+          case RcpTypes.Command.REMOVE:
+          case RcpTypes.Command.UPDATE:
             // expect parameter
             packet.data = this._parseParameter(_io);
 
             if (TOIVerbose) console.log("set packet data: " + JSON.stringify(packet.data));
 
             break;
-          case ToiTypes.Command.VERSION:
+          case RcpTypes.Command.VERSION:
             // version: expect meta
             // TODO: implement
             console.log("version not implemented yet");
@@ -658,7 +658,7 @@ TOIPacketDecoder.prototype._parsePacket = function(_io) {
 
         break;
 
-      case ToiTypes.Packet.PACKET_ID:
+      case RcpTypes.Packet.ID:
         packet.packetId = _io.readU4be();
         if (TOIVerbose) console.log("packet id: " + packet.packetId);
         break;
@@ -696,38 +696,44 @@ TOIPacketDecoder.prototype._parseParameter = function(_io) {
     // get data-id
     var dataid = _io.readU1();
 
-    if (dataid == ToiTypes.Packet.TERMINATOR) {
+    if (dataid == TERMINATOR) {
         break;
     }
 
     switch (dataid) {
-      case ToiTypes.Parameter.VALUE:
+      case RcpTypes.Parameter.VALUE:
         parameter.value = _readTypedValue(type.typeid, _io);
         if (TOIVerbose) console.log("parameter value:  " + parameter.value);
         break;
 
-      case ToiTypes.Parameter.LABEL:
-        parameter.label = _readTypedValue(ToiTypes.Datatype.TSTR, _io);
+      case RcpTypes.Parameter.LABEL:
+        parameter.label = _readTypedValue(RcpTypes.Datatype.TINY_STRING, _io);
         if (TOIVerbose) console.log("parameter label: " + parameter.label);
         break;
 
-      case ToiTypes.Parameter.DESCRIPTION:
-        parameter.description = _readTypedValue(ToiTypes.Datatype.SSTR, _io);
+      case RcpTypes.Parameter.DESCRIPTION:
+        parameter.description = _readTypedValue(RcpTypes.Datatype.SHORT_STRING, _io);
         if (TOIVerbose) console.log("parameter desc: " + parameter.description);
         break;
 
-      case ToiTypes.Parameter.ORDER:
+      case RcpTypes.Parameter.ORDER:
         parameter.order = _io.readS4be();
         if (TOIVerbose) console.log("parameter order: " + parameter.order);
         break;
 
-      case ToiTypes.Parameter.WIDGET:
+      case RcpTypes.Parameter.PARENT:
+        // skip...
+        parameter.parent = _io.readU4be();
+        if (TOIVerbose) console.log("parameter order: " + parameter.order);
+        break;
+
+      case RcpTypes.Parameter.WIDGET:
         // skip...
         console.log("widget not implemented");
         break;
 
-      case ToiTypes.Parameter.USERDATA:
-        var ud = new ToiTypes.Userdata(_io);
+      case RcpTypes.Parameter.USERDATA:
+        var ud = new RcpTypes.Userdata(_io);
         parameter.userdata = ud.data;
         if (TOIVerbose) console.log("userdata set");
         break;
@@ -742,8 +748,8 @@ TOIPacketDecoder.prototype._parseTypeDefinition = function(_io) {
   // read mandatory type
   var typeid = _io.readU1();
 
-  // check if typeid is contained in ToiTypes.Datatype
-  //ToiTypes.Datatype.hasOwnProperty(""+typeid);
+  // check if typeid is contained in RcpTypes.Datatype
+  //RcpTypes.Datatype.hasOwnProperty(""+typeid);
 
   if (typeid == 0) {
     throw "type id == 0!";
@@ -753,30 +759,30 @@ TOIPacketDecoder.prototype._parseTypeDefinition = function(_io) {
 
   switch (typeid) {
 
-    case ToiTypes.Datatype.BOOL:
+    case RcpTypes.Datatype.BOOLEAN:
       this._parseTypeDefault(type, _io);
       break;
 
     // number types
-    case ToiTypes.Datatype.INT8:
-    case ToiTypes.Datatype.UINT8:
-    case ToiTypes.Datatype.INT16:
-    case ToiTypes.Datatype.UINT16:
-    case ToiTypes.Datatype.INT32:
-    case ToiTypes.Datatype.UINT32:
-    case ToiTypes.Datatype.INT64:
-    case ToiTypes.Datatype.UINT64:
-    case ToiTypes.Datatype.FLOAT32:
-    case ToiTypes.Datatype.FLOAT64:
+    case RcpTypes.Datatype.INT8:
+    case RcpTypes.Datatype.UINT8:
+    case RcpTypes.Datatype.INT16:
+    case RcpTypes.Datatype.UINT16:
+    case RcpTypes.Datatype.INT32:
+    case RcpTypes.Datatype.UINT32:
+    case RcpTypes.Datatype.INT64:
+    case RcpTypes.Datatype.UINT64:
+    case RcpTypes.Datatype.FLOAT32:
+    case RcpTypes.Datatype.FLOAT64:
       this._parseTypeNumber(type, _io);
       break;
 
     // string
-    case ToiTypes.Datatype.TSTR:
+    case RcpTypes.Datatype.TINY_STRING:
       break;
-    case ToiTypes.Datatype.SSTR:
+    case RcpTypes.Datatype.SHORT_STRING:
       break;
-    case ToiTypes.Datatype.LSTR:
+    case RcpTypes.Datatype.STRING:
       this._parseTypeDefault(type, _io);
       break;
   }
@@ -804,13 +810,13 @@ TOIPacketDecoder.prototype._parseTypeDefault = function(_type, _io) {
 
     var dataid = _io.readU1();
 
-    if (dataid == ToiTypes.Packet.TERMINATOR) {
+    if (dataid == TERMINATOR) {
         break;
     }
 
     switch (dataid) {
 
-      case ToiTypes.TypeDefinition.DEFAULTVALUE:
+      case RcpTypes.StringProperty.DEFAULT:
         type.defaultValue = _readTypedValue(_type.typeid, _io);
         if (TOIVerbose) console.log("parse default, default: " + type.defaultValue);
         break;
@@ -841,36 +847,36 @@ TOIPacketDecoder.prototype._parseTypeNumber = function(_type, _io) {
 
     var dataid = _io.readU1();
 
-    if (dataid == ToiTypes.Packet.TERMINATOR) {
+    if (dataid == TERMINATOR) {
         break;
     }
 
     switch (dataid) {
 
-      case ToiTypes.TypeNumber.DEFAULTVALUE:
+      case RcpTypes.NumberProperty.DEFAULT:
         type.defaultValue = _readTypedValue(_type.typeid, _io);
         if (TOIVerbose) console.log("number default: " + type.defaultValue);
         break;
-      case ToiTypes.TypeNumber.MIN:
+      case RcpTypes.NumberProperty.MINIMUM:
         type.min = _readTypedValue(_type.typeid, _io);
         if (TOIVerbose) console.log("number min: " + type.min);
         break;
-      case ToiTypes.TypeNumber.MAX:
+      case RcpTypes.NumberProperty.MAXIMUM:
         type.max = _readTypedValue(_type.typeid, _io);
         if (TOIVerbose) console.log("number max: " + type.max);
         break;
-      case ToiTypes.TypeNumber.MULT:
+      case RcpTypes.NumberProperty.MULTIPLEOF:
         type.multipleof = _readTypedValue(_type.typeid, _io);
         if (TOIVerbose) console.log("number mult: " + type.multipleof);
         break;
 
-      case ToiTypes.TypeNumber.SCALE:
+      case RcpTypes.NumberProperty.SCALE:
         type.scale = _io.readU1();
         if (TOIVerbose) console.log("number scale: " + type.scale);
         break;
 
-      case ToiTypes.TypeNumber.UNIT:
-        var tinyString = new ToiTypes.TinyString(_io);
+      case RcpTypes.NumberProperty.UNIT:
+        var tinyString = new RcpTypes.TinyString(_io);
         type.unit = tinyString.data;
         if (TOIVerbose) console.log("number unit: " + type.unit);
         break;
@@ -910,21 +916,21 @@ ToiPacket.prototype.write = function(_array) {
 
   // write optionals
   if (this.packetId != null) {
-    array.push(ToiTypes.Packet.PACKET_ID);
+    array.push(RcpTypes.Packet.ID);
     pushIn32ToArrayBe(this.packetId, array);
   }
 
   if (this.timestamp != null) {
-    array.push(ToiTypes.Packet.PACKET_TIME);
+    array.push(RcpTypes.Packet.TIMESTAMP);
     pushFloat64ToArrayBe(this.timestamp, array);
   }
 
   if (this.data != null) {
-    array.push(ToiTypes.Packet.DATA);
+    array.push(RcpTypes.Packet.DATA);
     array = this.data.write(array);
   }
 
-  array.push(ToiTypes.Packet.TERMINATOR);
+  array.push(TERMINATOR);
 
   return array;
 }
@@ -979,39 +985,44 @@ ToiParameter.prototype.write = function(array) {
 
   // write optionals
   if (this.value != null) {
-    array.push(ToiTypes.Parameter.VALUE);
+    array.push(RcpTypes.Parameter.VALUE);
     array = _writeTypedValue(this.type.typeid, this.value, array);
   }
 
   if (this.label != null) {
-    array.push(ToiTypes.Parameter.LABEL);
+    array.push(RcpTypes.Parameter.LABEL);
     array = writeTinyString(this.label, array);
   }
 
   if (this.description != null) {
-    array.push(ToiTypes.Parameter.DESCRIPTION);
+    array.push(RcpTypes.Parameter.DESCRIPTION);
     array = writeShortString(this.description, array);
   }
 
   if (this.order != null) {
-    array.push(ToiTypes.Parameter.ORDER);
+    array.push(RcpTypes.Parameter.ORDER);
     pushIn32ToArrayBe(this.order, array);
   }
 
+  if (this.parent != null) {
+    array.push(RcpTypes.Parameter.PARENT);
+    pushIn32ToArrayBe(this.parent, array);
+  }
+
   if (this.widget != null) {
-    //array.push(ToiTypes.Parameter.WIDGET);
+    //array.push(RcpTypes.Parameter.WIDGET);
     console.log("widget ignored for now");
   }
 
   if (this.userdata != null) {
-    array.push(ToiTypes.Parameter.USERDATA);
+    array.push(RcpTypes.Parameter.USERDATA);
     pushIn32ToArrayBe(this.userdata.length, array);
 
     var userarray = [].slice.call(this.userdata);
     array = array.concat(userarray);
   }
 
-  array.push(ToiTypes.Packet.TERMINATOR);
+  array.push(TERMINATOR);
 
   return array;
 }
@@ -1087,28 +1098,28 @@ ToiTypeDefinition.prototype.update = function(type) {
   }
 
   switch (type.typeid) {
-    case ToiTypes.Datatype.BOOL:
+    case RcpTypes.Datatype.BOOLEAN:
       // only default in bool
       break;
 
     // number types
-    case ToiTypes.Datatype.INT8:
-    case ToiTypes.Datatype.UINT8:
-    case ToiTypes.Datatype.INT16:
-    case ToiTypes.Datatype.UINT16:
-    case ToiTypes.Datatype.INT32:
-    case ToiTypes.Datatype.UINT32:
-    case ToiTypes.Datatype.INT64:
-    case ToiTypes.Datatype.UINT64:
-    case ToiTypes.Datatype.FLOAT32:
-    case ToiTypes.Datatype.FLOAT64:
+    case RcpTypes.Datatype.INT8:
+    case RcpTypes.Datatype.UINT8:
+    case RcpTypes.Datatype.INT16:
+    case RcpTypes.Datatype.UINT16:
+    case RcpTypes.Datatype.INT32:
+    case RcpTypes.Datatype.UINT32:
+    case RcpTypes.Datatype.INT64:
+    case RcpTypes.Datatype.UINT64:
+    case RcpTypes.Datatype.FLOAT32:
+    case RcpTypes.Datatype.FLOAT64:
       this._updateNumber(type);
       break;
 
     // string
-    case ToiTypes.Datatype.TSTR:
-    case ToiTypes.Datatype.SSTR:
-    case ToiTypes.Datatype.LSTR:
+    case RcpTypes.Datatype.TINY_STRING:
+    case RcpTypes.Datatype.SHORT_STRING:
+    case RcpTypes.Datatype.STRING:
     default:
       break;
   }
@@ -1153,35 +1164,35 @@ ToiTypeDefinition.prototype.write = function(array) {
 
   // write optionals
   switch (this.typeid) {
-    case ToiTypes.Datatype.BOOL:
+    case RcpTypes.Datatype.BOOLEAN:
       // only default in bool
       array = this._writeBoolean(array);
       break;
 
     // number types
-    case ToiTypes.Datatype.INT8:
-    case ToiTypes.Datatype.UINT8:
-    case ToiTypes.Datatype.INT16:
-    case ToiTypes.Datatype.UINT16:
-    case ToiTypes.Datatype.INT32:
-    case ToiTypes.Datatype.UINT32:
-    case ToiTypes.Datatype.INT64:
-    case ToiTypes.Datatype.UINT64:
-    case ToiTypes.Datatype.FLOAT32:
-    case ToiTypes.Datatype.FLOAT64:
+    case RcpTypes.Datatype.INT8:
+    case RcpTypes.Datatype.UINT8:
+    case RcpTypes.Datatype.INT16:
+    case RcpTypes.Datatype.UINT16:
+    case RcpTypes.Datatype.INT32:
+    case RcpTypes.Datatype.UINT32:
+    case RcpTypes.Datatype.INT64:
+    case RcpTypes.Datatype.UINT64:
+    case RcpTypes.Datatype.FLOAT32:
+    case RcpTypes.Datatype.FLOAT64:
       array = this._writeNumber(array);
       break;
 
     // string
-    case ToiTypes.Datatype.TSTR:
-    case ToiTypes.Datatype.SSTR:
-    case ToiTypes.Datatype.LSTR:
+    case RcpTypes.Datatype.TINY_STRING:
+    case RcpTypes.Datatype.SHORT_STRING:
+    case RcpTypes.Datatype.STRING:
       array = this._writeString(array);
     default:
       break;
   }
 
-  array.push(ToiTypes.Packet.TERMINATOR);
+  array.push(TERMINATOR);
 
   return array;
 };
@@ -1189,7 +1200,7 @@ ToiTypeDefinition.prototype.write = function(array) {
 ToiTypeDefinition.prototype._writeBoolean = function(array) {
 
   if (this.defaultValue != null) {
-    array.push(ToiTypes.TypeDefinition.DEFAULTVALUE);
+    array.push(RcpTypes.BooleanProperty.DEFAULT);
     array.push(this.defaultValue);
   }
 
@@ -1199,7 +1210,7 @@ ToiTypeDefinition.prototype._writeBoolean = function(array) {
 ToiTypeDefinition.prototype._writeString = function(array) {
 
   if (this.defaultValue != null) {
-    array.push(ToiTypes.TypeDefinition.DEFAULTVALUE);
+    array.push(RcpTypes.StringProperty.DEFAULT);
 
     array = writeLongString(this.defaultValue, array);
   }
@@ -1210,32 +1221,32 @@ ToiTypeDefinition.prototype._writeString = function(array) {
 ToiTypeDefinition.prototype._writeNumber = function(array) {
 
   if (this.defaultValue != null) {
-    array.push(ToiTypes.TypeNumber.DEFAULTVALUE);
+    array.push(RcpTypes.NumberProperty.DEFAULT);
     array = _writeTypedValue(this.typeid, this.defaultValue, array);
   }
 
   if (this.min != null) {
-    array.push(ToiTypes.TypeNumber.MIN);
+    array.push(RcpTypes.NumberProperty.MINIMUM);
     array = _writeTypedValue(this.typeid, this.min, array);
   }
 
   if (this.max != null) {
-    array.push(ToiTypes.TypeNumber.MAX);
+    array.push(RcpTypes.NumberProperty.MAXIMUM);
     array = _writeTypedValue(this.typeid, this.max, array);
   }
 
   if (this.multipleof != null) {
-    array.push(ToiTypes.TypeNumber.MULT);
+    array.push(RcpTypes.NumberProperty.MULTIPLEOF);
     array = _writeTypedValue(this.typeid, this.multipleof, array);
   }
 
   if (this.scale != null) {
-    array.push(ToiTypes.TypeNumber.SCALE);
+    array.push(RcpTypes.NumberProperty.SCALE);
     array.push(this.scale);
   }
 
   if (this.unit != null) {
-    array.push(ToiTypes.TypeNumber.UNIT);
+    array.push(RcpTypes.NumberProperty.UNIT);
     // write as tiny string
     array = writeTinyString(this.unit, array);
   }
