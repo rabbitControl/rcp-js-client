@@ -147,6 +147,9 @@ _readTypedValue = function(_typeid, _io) {
     case RcpTypes.Datatype.STRING:
       var strObj = new RcpTypes.LongString(_io);
       return strObj.data;
+
+    case RcpTypes.Datatype.ENUM:
+      return _io.readU4be();
   }
 
   return null;
@@ -191,6 +194,10 @@ _writeTypedValue = function(_typeid, value, array) {
       break;
     case RcpTypes.Datatype.STRING:
       array = writeLongString(value, array);
+      break;
+
+    case RcpTypes.Datatype.ENUM:
+      pushIn32ToArrayBe(value, array);
       break;
   }
 
@@ -779,11 +786,15 @@ TOIPacketDecoder.prototype._parseTypeDefinition = function(_io) {
 
     // string
     case RcpTypes.Datatype.TINY_STRING:
-      break;
     case RcpTypes.Datatype.SHORT_STRING:
       break;
     case RcpTypes.Datatype.STRING:
       this._parseTypeDefault(type, _io);
+      break;
+
+    // enum
+    case RcpTypes.Datatype.ENUM:
+      this._parseTypeEnum(type, _io);
       break;
   }
 
@@ -827,7 +838,7 @@ TOIPacketDecoder.prototype._parseTypeDefault = function(_type, _io) {
 
       default:
         // not a number data id!!
-        throw "wrong data id for a bool";
+        throw "wrong data id for a default-type";
     }
   }
 }
@@ -892,6 +903,59 @@ TOIPacketDecoder.prototype._parseTypeNumber = function(_type, _io) {
   }
 }
 
+
+TOIPacketDecoder.prototype._parseTypeEnum = function(_type, _io) {
+
+  if (_type == null || _io == null) {
+    return;
+  }
+
+  if (!(_type instanceof ToiTypeDefinition)) {
+    return;
+  }
+
+  var type = _type;
+
+  if (TOIVerbose) console.log("parse enum options");
+
+  // parse optionals
+  while (true) {
+
+    var dataid = _io.readU1();
+
+    if (dataid == TERMINATOR) {
+        break;
+    }
+
+    switch (dataid) {
+
+      case RcpTypes.EnumOptions.DEFAULT:
+        type.defaultValue = _readTypedValue(_type.typeid, _io);
+        if (TOIVerbose) console.log("parse default, default: " + type.defaultValue);
+        break;
+
+      case RcpTypes.EnumOptions.ENTRIES:
+      {
+        if (TOIVerbose) console.log("parse entries...");
+
+        var numEntries = _io.readU2be();
+        var entries = [];
+        for (var i=0; i< numEntries; i++) {
+          var entry = _readTypedValue(RcpTypes.Datatype.TINY_STRING, _io);
+          if (TOIVerbose) console.log("adding entry: " + entry);
+          entries.push(entry);
+        }
+        type.entries = entries;
+      }
+        break;
+
+      default:
+        // not a number data id!!
+        throw "wrong data id for a ENUM";
+    }
+  }
+
+}
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -1124,6 +1188,7 @@ ToiTypeDefinition.prototype.update = function(type) {
     case RcpTypes.Datatype.TINY_STRING:
     case RcpTypes.Datatype.SHORT_STRING:
     case RcpTypes.Datatype.STRING:
+    case RcpTypes.Datatype.ENUM:
     default:
       break;
   }
@@ -1192,6 +1257,12 @@ ToiTypeDefinition.prototype.write = function(array) {
     case RcpTypes.Datatype.SHORT_STRING:
     case RcpTypes.Datatype.STRING:
       array = this._writeString(array);
+      break;
+
+    case RcpTypes.Datatype.ENUM:
+      array = this._writeEnum(array);
+      break;
+
     default:
       break;
   }
@@ -1217,6 +1288,21 @@ ToiTypeDefinition.prototype._writeString = function(array) {
     array.push(RcpTypes.StringOptions.DEFAULT);
 
     array = writeLongString(this.defaultValue, array);
+  }
+
+  return array;
+}
+
+ToiTypeDefinition.prototype._writeEnum = function(array) {
+
+  if (this.defaultValue != null) {
+    array.push(RcpTypes.StringOptions.DEFAULT);
+
+    array = _writeTypedValue(this.typeid, this.defaultValue, array);
+  }
+
+  if (this.entries != null) {
+    // nop - dont write 'em out
   }
 
   return array;

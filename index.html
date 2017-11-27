@@ -100,6 +100,26 @@
         break;
       }
 
+      case RcpTypes.Datatype.RGB:
+      case RcpTypes.Datatype.RGBA:
+        break;
+
+      case RcpTypes.Datatype.ENUM:
+      {
+        var box = createSelectMenu(parameter.id, parameter.type.entries);
+        updateParam(parameter);
+
+        // last value CB
+        var id = parameter.id;
+        $("#param-"+id).change(function() {
+          valueChange(id, $("#param-"+id).val());
+        });
+      }
+        break;
+
+      case RcpTypes.Datatype.FIXED_ARRAY:
+      case RcpTypes.Datatype.DYNAMIC_ARRAY:
+
       default:
         console.log("no such type...");
     }
@@ -153,6 +173,15 @@
     try {
       if (input.checkboxradio != null) {
         input.checkboxradio('refresh');
+      }
+    } catch(err) {
+      //nop
+    }
+
+    // update selectmenu
+    try {
+      if (input.selectmenu != null) {
+        input.selectmenu('refresh');
       }
     } catch(err) {
       //nop
@@ -232,6 +261,47 @@
     $('#content').append(newSet);
 
     var newBox = $('<label for="param-' + id + '" id="label-' + id + '" > Text: </label> <input type="text" name="param-'+id+'" id="param-'+id+'" value="">');
+    $("#content .cbGroup" + id).append(newBox).trigger('create');
+    $('<hr>').appendTo( "#content .cbGroup" + id );
+
+    return newBox;
+  }
+
+  function createSelectMenu(id, entries) {
+
+    console.log("create select menu: " + id);
+
+    var newSet = '<fieldset data-role="controlgroup" class="cbGroup' + id + '"></fieldset>';
+    $('#content').append(newSet);
+
+    /*
+    <form>
+    <div class="ui-field-contain">
+        <label for="select-native-1">Basic:</label>
+        <select name="select-native-1" id="select-native-1">
+            <option value="1">The 1st Option</option>
+            <option value="2">The 2nd Option</option>
+            <option value="3">The 3rd Option</option>
+            <option value="4">The 4th Option</option>
+        </select>
+    </div>
+    </form>
+    */
+
+    var boxstring = '<label for="param-' + id + '" id="label-' + id + '" > ENUM: </label>\
+    <select name="param-'+id+'" id="param-'+id+'">';
+
+    if (entries != null) {
+      var i=0;
+      entries.forEach(function(element) {
+          boxstring += '<option value="' + i + '" id="option-' + id + '-' + i + '">' + element + '</option>';
+          i++;
+      });
+    }
+
+    boxstring += '</select>';
+
+    var newBox = $(boxstring);
     $("#content .cbGroup" + id).append(newBox).trigger('create');
     $('<hr>').appendTo( "#content .cbGroup" + id );
 
