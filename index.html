@@ -102,6 +102,16 @@
 
       case RcpTypes.Datatype.RGB:
       case RcpTypes.Datatype.RGBA:
+      {
+        var box = createColorBox(parameter.id);        
+        updateParam(parameter);
+
+        // last value CB
+        var id = parameter.id;
+        $("#param-"+id).change(function() {
+          valueChange(id, $("#param-"+id).val());
+        });
+      }
         break;
 
       case RcpTypes.Datatype.ENUM:
@@ -261,6 +271,20 @@
     $('#content').append(newSet);
 
     var newBox = $('<label for="param-' + id + '" id="label-' + id + '" > Text: </label> <input type="text" name="param-'+id+'" id="param-'+id+'" value="">');
+    $("#content .cbGroup" + id).append(newBox).trigger('create');
+    $('<hr>').appendTo( "#content .cbGroup" + id );
+
+    return newBox;
+  }
+
+  function createColorBox(id) {
+
+    console.log("create colorbox: " + id);
+
+    var newSet = '<fieldset data-role="controlgroup" class="cbGroup' + id + '"></fieldset>';
+    $('#content').append(newSet);
+
+    var newBox = $('<label for="param-' + id + '" id="label-' + id + '" > Text: </label> <input type="color" name="param-'+id+'" id="param-'+id+'" value="">');
     $("#content .cbGroup" + id).append(newBox).trigger('create');
     $('<hr>').appendTo( "#content .cbGroup" + id );
 

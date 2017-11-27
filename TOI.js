@@ -104,6 +104,34 @@ writeLongString = function(string, array) {
 }
 
 
+byteToHex = function(num) {
+    // Turns a number (0-255) into a 2-character hex number (00-ff)
+    return ('0'+num.toString(16)).slice(-2);
+}
+
+numToColor = function(color) {
+
+  var r = color & 0xff;
+  var g = (color >> 8) & 0xff;
+  var b = (color >> 16) & 0xff;
+  var a = (color >> 24) & 0xff;
+
+  return "#" + byteToHex(r) + byteToHex(g) + byteToHex(b);
+}
+
+colorToNum = function(color) {
+
+  var rpart = color.slice(1, 3);
+  var gpart = color.slice(3, 5);
+  var bpart = color.slice(5, 7);
+
+  var r = parseInt(rpart, 16);
+  var g = parseInt(gpart, 16);
+  var b = parseInt(bpart, 16);
+
+  return (r + (g << 8) + (b << 16));
+}
+
 _readTypedValue = function(_typeid, _io) {
 
   if (_io == null || !(_io instanceof KaitaiStream)) {
@@ -150,6 +178,10 @@ _readTypedValue = function(_typeid, _io) {
 
     case RcpTypes.Datatype.ENUM:
       return _io.readU4be();
+
+    case RcpTypes.Datatype.RGB:
+    case RcpTypes.Datatype.RGBA:
+      return numToColor(_io.readU4be());
   }
 
   return null;
@@ -199,6 +231,14 @@ _writeTypedValue = function(_typeid, value, array) {
     case RcpTypes.Datatype.ENUM:
       pushIn32ToArrayBe(value, array);
       break;
+
+    case RcpTypes.Datatype.RGBA:
+      // TODO: alpha...?
+    case RcpTypes.Datatype.RGB:
+    {
+      pushIn32ToArrayBe(colorToNum(value), array);
+      break;
+    }
   }
 
   return array;
@@ -789,6 +829,8 @@ TOIPacketDecoder.prototype._parseTypeDefinition = function(_io) {
     case RcpTypes.Datatype.SHORT_STRING:
       break;
     case RcpTypes.Datatype.STRING:
+    case RcpTypes.Datatype.RGB:
+    case RcpTypes.Datatype.RGBA:
       this._parseTypeDefault(type, _io);
       break;
 
