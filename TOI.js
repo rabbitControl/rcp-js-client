@@ -177,7 +177,7 @@ _readTypedValue = function(_typeid, _io) {
       return strObj.data;
 
     case RcpTypes.Datatype.ENUM:
-      return _io.readU4be();
+      return _io.readU2be();
 
     case RcpTypes.Datatype.RGB:
     case RcpTypes.Datatype.RGBA:
