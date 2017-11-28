@@ -880,7 +880,7 @@ TOIPacketDecoder.prototype._parseTypeDefault = function(_type, _io) {
 
       default:
         // not a number data id!!
-        throw "wrong data id for a default-type";
+        throw "wrong data id for a default-type: " + dataid;
     }
   }
 }
@@ -993,7 +993,7 @@ TOIPacketDecoder.prototype._parseTypeEnum = function(_type, _io) {
 
       default:
         // not a number data id!!
-        throw "wrong data id for a ENUM";
+        throw "wrong data id for a ENUM: " + dataid;
     }
   }
 
