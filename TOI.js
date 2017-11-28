@@ -229,7 +229,7 @@ _writeTypedValue = function(_typeid, value, array) {
       break;
 
     case RcpTypes.Datatype.ENUM:
-      pushIn32ToArrayBe(value, array);
+      pushIn16ToArrayBe(value, array);
       break;
 
     case RcpTypes.Datatype.RGBA:
