@@ -213,7 +213,7 @@ _writeTypedValue = function(_typeid, value, array) {
       pushFloat64ToArrayBe(value, array);
       break;
     case RcpTypes.Datatype.FLOAT32:
-      pushFloat64ToArrayBe(value, array);
+      pushFloat32ToArrayBe(value, array);
       break;
     case RcpTypes.Datatype.FLOAT64:
       pushFloat64ToArrayBe(value, array);
