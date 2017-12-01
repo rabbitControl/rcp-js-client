@@ -551,11 +551,15 @@ TOISocket.prototype.open = function(address, port, ssl) {
   }
 
   var doSSL = ssl || false;
+  var host = window.location.hostname;
+  if (host == null || host == undefined || host == "") {
+    host = "localhost";
+  }
 
   if (doSSL) {
-    this.address = "wss://" + address + ":" + port;
+    this.address = "wss://" + host + ":" + port;
   } else {
-    this.address = "ws://" + address + ":" + port;
+    this.address = "ws://" + host + ":" + port;
   }
 
   this.webSocket = new window.WebSocket(this.address);
