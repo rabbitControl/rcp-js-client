@@ -103,7 +103,7 @@
       case RcpTypes.Datatype.RGB:
       case RcpTypes.Datatype.RGBA:
       {
-        var box = createColorBox(parameter.id);        
+        var box = createColorBox(parameter.id);
         updateParam(parameter);
 
         // last value CB
@@ -342,8 +342,14 @@
   client.update = updateParam;
   client.remove = removeParam;
 
+  var host = window.location.hostname;
+  console.log("hostname: " + host);
+  if (host == null || host == undefined || host == "") {
+    host = "localhost";
+  }
+  
   // open a connection to server
-  client.open("localhost", 10000);
+  client.open(host, 10000);
 </script>
 
 </head>
