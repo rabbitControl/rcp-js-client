@@ -1,4 +1,14 @@
 // -*- mode: js; js-indent-level: 2; -*-
+(function (root, factory) {
+  if (typeof define === 'function' && define.amd) {
+    define([], factory);
+  } else if (typeof module === 'object' && module.exports) {
+    module.exports = factory();
+  } else {
+    root.KaitaiStream = factory();
+  }
+}(this, function () {
+
 /**
   KaitaiStream is an implementation of Kaitai Struct API for JavaScript.
   Based on DataStream - https://github.com/kig/DataStream.js
@@ -6,7 +16,7 @@
   @param {ArrayBuffer} arrayBuffer ArrayBuffer to read from.
   @param {?Number} byteOffset Offset from arrayBuffer beginning for the KaitaiStream.
   */
-KaitaiStream = function(arrayBuffer, byteOffset) {
+var KaitaiStream = function(arrayBuffer, byteOffset) {
   this._byteOffset = byteOffset || 0;
   if (arrayBuffer instanceof ArrayBuffer) {
     this.buffer = arrayBuffer;
@@ -451,12 +461,12 @@ KaitaiStream.prototype.readBytesTerm = function(terminator, include, consume, eo
 KaitaiStream.prototype.ensureFixedContents = function(expected) {
   var actual = this.readBytes(expected.length);
   if (actual.length !== expected.length) {
-    throw new KaitaiUnexpectedDataError(expected, actual);
+    throw new UnexpectedDataError(expected, actual);
   }
   var actLen = actual.length;
   for (var i = 0; i < actLen; i++) {
     if (actual[i] != expected[i]) {
-      throw new KaitaiUnexpectedDataError(expected, actual);
+      throw new UnexpectedDataError(expected, actual);
     }
   }
   return actual;
@@ -620,35 +630,35 @@ KaitaiStream.byteArrayCompare = function(a, b) {
 // Internal implementation details
 // ========================================================================
 
-KaitaiEOFError = function(bytesReq, bytesAvail) {
-  this.name = "KaitaiEOFError";
+var EOFError = KaitaiStream.EOFError = function(bytesReq, bytesAvail) {
+  this.name = "EOFError";
   this.message = "requested " + bytesReq + " bytes, but only " + bytesAvail + " bytes available";
   this.bytesReq = bytesReq;
   this.bytesAvail = bytesAvail;
   this.stack = (new Error()).stack;
 }
 
-KaitaiEOFError.prototype = Object.create(Error.prototype);
-KaitaiEOFError.prototype.constructor = KaitaiEOFError;
+EOFError.prototype = Object.create(Error.prototype);
+EOFError.prototype.constructor = EOFError;
 
-KaitaiUnexpectedDataError = function(expected, actual) {
-  this.name = "KaitaiUnexpectedDataError";
+var UnexpectedDataError = KaitaiStream.UnexpectedDataError = function(expected, actual) {
+  this.name = "UnexpectedDataError";
   this.message = "expected [" + expected + "], but got [" + actual + "]";
   this.expected = expected;
   this.actual = actual;
   this.stack = (new Error()).stack;
 }
 
-KaitaiUnexpectedDataError.prototype = Object.create(Error.prototype);
-KaitaiUnexpectedDataError.prototype.constructor = KaitaiUnexpectedDataError;
+UnexpectedDataError.prototype = Object.create(Error.prototype);
+UnexpectedDataError.prototype.constructor = UnexpectedDataError;
 
-KaitaiUndecidedEndiannessError = function() {
-  this.name = "KaitaiUndecidedEndiannessError";
+var UndecidedEndiannessError = KaitaiStream.UndecidedEndiannessError = function() {
+  this.name = "UndecidedEndiannessError";
   this.stack = (new Error()).stack;
 }
 
-KaitaiUndecidedEndiannessError.prototype = Object.create(Error.prototype);
-KaitaiUndecidedEndiannessError.prototype.constructor = KaitaiUndecidedEndiannessError;
+UndecidedEndiannessError.prototype = Object.create(Error.prototype);
+UndecidedEndiannessError.prototype.constructor = UndecidedEndiannessError;
 
 /**
   Maps a Uint8Array into the KaitaiStream buffer.
@@ -660,7 +670,7 @@ KaitaiUndecidedEndiannessError.prototype.constructor = KaitaiUndecidedEndianness
   */
 KaitaiStream.prototype.mapUint8Array = function(length) {
   if (this.pos + length > this.size) {
-    throw new KaitaiEOFError(length, this.size - this.pos);
+    throw new EOFError(length, this.size - this.pos);
   }
 
   var arr = new Uint8Array(this._buffer, this.byteOffset + this.pos, length);
@@ -685,20 +695,6 @@ KaitaiStream.createStringFromArray = function(array) {
   return chunks.join("");
 };
 
-// ========================================================================
-// Mandatory footer: exports
-// ========================================================================
+return KaitaiStream;
 
-// Export KaitaiStream for amd environments
-if (typeof define === 'function' && define.amd) {
-  console.log("EXPORT AMD");
-  define('KaitaiStream', [], function() {
-    return KaitaiStream;
-  });
-}
-
-// Export KaitaiStream for CommonJS
-if (typeof module === 'object' && module && module.exports) {
-  console.log("EXPORT");
-  module.exports = KaitaiStream;
-}
+}));
