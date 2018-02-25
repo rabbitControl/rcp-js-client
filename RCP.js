@@ -132,7 +132,22 @@ colorToNum = function(color) {
   return (r + (g << 8) + (b << 16));
 }
 
+
+_readTinyString = function(_io) {
+  var strObj = new RcpTypes.TinyString(_io);
+  return strObj.data;
+}
+
+_readShortString = function(_io) {
+  var strObj = new RcpTypes.ShortString(_io);
+  return strObj.data;
+}
+
 _readTypedValue = function(_typeid, _io) {
+
+  if (_typeid == null || _typeid == undefined) {
+    throw "no _typeid provided";
+  }
 
   if (_io == null || !(_io instanceof KaitaiStream)) {
     throw "no KaitaiStream provided";
@@ -166,12 +181,6 @@ _readTypedValue = function(_typeid, _io) {
         return _io.readF8be();
 
     // string
-    case RcpTypes.Datatype.TINY_STRING:
-      var strObj = new RcpTypes.TinyString(_io);
-      return strObj.data;
-    case RcpTypes.Datatype.SHORT_STRING:
-      var strObj = new RcpTypes.ShortString(_io);
-      return strObj.data;
     case RcpTypes.Datatype.STRING:
       var strObj = new RcpTypes.LongString(_io);
       return strObj.data;
@@ -220,10 +229,6 @@ _writeTypedValue = function(_typeid, value, array) {
       break;
 
     // string
-    case RcpTypes.Datatype.TINY_STRING:
-      break;
-    case RcpTypes.Datatype.SHORT_STRING:
-      break;
     case RcpTypes.Datatype.STRING:
       array = writeLongString(value, array);
       break;
@@ -359,6 +364,7 @@ ToiClient.prototype._add = function(parameter) {
   // add the parameter...
 
   if (!_validateParameter(parameter)) {
+    console.error("_add: invalid parameter");
     return;
   }
 
@@ -369,7 +375,7 @@ ToiClient.prototype._add = function(parameter) {
   }
 
   // ok, add it
-  console.log("adding parameter: " + JSON.stringify(parameter));
+  if (TOIVerbose) console.log("adding parameter: " + JSON.stringify(parameter));
   this.valueCache[parameter.id] = parameter;
 
   // console.log("this.valueCache: " + this.valueCache);
@@ -381,24 +387,42 @@ ToiClient.prototype._add = function(parameter) {
 
 //------------------------------------------------
 //------------------------------------------------
+function arraysIdentical(a, b) {
+    var i = a.length;
+    if (i != b.length) {
+      return false;
+    }
+
+    while (i--) {
+        if (a[i] !== b[i]) {
+          return false;
+        }
+    }
+    return true;
+};
+
 ToiClient.prototype._updateCache = function(parameter) {
 
   if (!_validateParameter(parameter)) {
+    console.log("aaaa");
     return false;
   }
 
   // get value from cache
   if (!this.valueCache[parameter.id]) {
-    console.error("value not in data-cache... drop");
+    console.error("_updateCache: value not in data-cache... drop");
     return false;
   }
 
   var cachedParam = this.valueCache[parameter.id];
 
+  console.log("parameter: " + parameter.id);
+  console.log("cachedParam: " + cachedParam.id);
+
   // update cached
   // check types...
-  if (parameter.id != cachedParam.id) {
-    console.error("ids do not match");
+  if (!arraysIdentical(parameter.id, cachedParam.id)) {
+    console.error("ids do not match: " + parameter.id + " != " + cachedParam.id);
     return false;
   }
 
@@ -409,7 +433,7 @@ ToiClient.prototype._updateCache = function(parameter) {
 
   cachedParam.update(parameter);
 
-  console.log("updated cached parameter: " + JSON.stringify(cachedParam));
+  if (TOIVerbose) console.log("updated cached parameter: " + JSON.stringify(cachedParam));
 
   return true;
 }
@@ -438,7 +462,7 @@ ToiClient.prototype._remove = function(parameter) {
 
   // get value from cache
   if (!this.valueCache[parameter.id]) {
-    console.error("value not in data-cache... drop");
+    console.error("_remove: value not in data-cache... drop " + parameter.id);
     return;
   }
 
@@ -480,7 +504,7 @@ TOISocket.prototype._onopen = function(e) {
 
   // TODO send init data...
   // 04 0F 05 09 01
-  var data = new Uint8Array([RcpTypes.Command.INITIALIZE]);
+  var data = new Uint8Array([RcpTypes.Command.INITIALIZE, 0]);
   this.send(data);
 
   if (this._.onopen) {
@@ -571,8 +595,8 @@ TOISocket.prototype.open = function(address, port, ssl) {
 
 TOISocket.prototype.send = function(message) {
 
-  console.log("this.webSocket.readyState: " + this.webSocket.readyState);
-  console.log("typeof message: " + typeof message + " : " + (message instanceof Uint8Array) + ": " + message.constructor.name);
+  if (TOIVerbose) console.log("this.webSocket.readyState: " + this.webSocket.readyState);
+  if (TOIVerbose) console.log("typeof message: " + typeof message + " : " + (message instanceof Uint8Array) + ": " + message.constructor.name);
 
   if (this.webSocket.readyState == 1) {
 
@@ -614,6 +638,11 @@ function TOIPacketDecoder() {
 TOIPacketDecoder.prototype = {};
 
 TOIPacketDecoder.prototype._receive = function(arraybuffer) {
+
+  if (TOIVerbose) {
+    var view   = new Int8Array(arraybuffer);
+    console.log(view);
+  }
 
   var _io = new KaitaiStream(arraybuffer);
 
@@ -670,6 +699,7 @@ TOIPacketDecoder.prototype._parsePacket = function(_io) {
   while (!_io.isEof()) {
 
     var dataid = _io.readU1();
+    if (TOIVerbose) console.log("option: " + dataid);
 
     if (dataid == TERMINATOR) {
       break;
@@ -691,6 +721,7 @@ TOIPacketDecoder.prototype._parsePacket = function(_io) {
           case RcpTypes.Command.REMOVE:
           case RcpTypes.Command.UPDATE:
             // expect parameter
+            if (TOIVerbose) console.log("parse parameter");
             packet.data = this._parseParameter(_io);
 
             if (TOIVerbose) console.log("set packet data: " + JSON.stringify(packet.data));
@@ -705,11 +736,7 @@ TOIPacketDecoder.prototype._parsePacket = function(_io) {
 
         break;
 
-      case RcpTypes.PacketOptions.ID:
-        packet.packetId = _io.readU4be();
-        if (TOIVerbose) console.log("packet id: " + packet.packetId);
-        break;
-      case PACKET_TIME:
+      case RcpTypes.PacketOptions.TIMESTAMP:
         packet.timestamp = _io.readU8be();
         if (TOIVerbose) console.log("packet timestamp: " + packet.timestamp);
         break;
@@ -729,7 +756,9 @@ TOIPacketDecoder.prototype._parsePacket = function(_io) {
 TOIPacketDecoder.prototype._parseParameter = function(_io) {
 
   // get mandatory id
-  var paramId = _io.readS4be();
+  var myLen = _io.readU1();
+  var paramId = _io.readBytes(myLen);
+
   // get mandatory type
   var type = this._parseTypeDefinition(_io);
 
@@ -754,12 +783,12 @@ TOIPacketDecoder.prototype._parseParameter = function(_io) {
         break;
 
       case RcpTypes.ParameterOptions.LABEL:
-        parameter.label = _readTypedValue(RcpTypes.Datatype.TINY_STRING, _io);
+        parameter.label = _readTinyString(_io);
         if (TOIVerbose) console.log("parameter label: " + parameter.label);
         break;
 
       case RcpTypes.ParameterOptions.DESCRIPTION:
-        parameter.description = _readTypedValue(RcpTypes.Datatype.SHORT_STRING, _io);
+        parameter.description = _readShortString(_io);
         if (TOIVerbose) console.log("parameter desc: " + parameter.description);
         break;
 
@@ -825,10 +854,8 @@ TOIPacketDecoder.prototype._parseTypeDefinition = function(_io) {
       break;
 
     // string
-    case RcpTypes.Datatype.TINY_STRING:
-    case RcpTypes.Datatype.SHORT_STRING:
-      break;
     case RcpTypes.Datatype.STRING:
+    // color
     case RcpTypes.Datatype.RGB:
     case RcpTypes.Datatype.RGBA:
       this._parseTypeDefault(type, _io);
@@ -933,8 +960,7 @@ TOIPacketDecoder.prototype._parseTypeNumber = function(_type, _io) {
         break;
 
       case RcpTypes.NumberOptions.UNIT:
-        var tinyString = new RcpTypes.TinyString(_io);
-        type.unit = tinyString.data;
+        type.unit = _readTinyString(_io);
         if (TOIVerbose) console.log("number unit: " + type.unit);
         break;
 
@@ -983,7 +1009,7 @@ TOIPacketDecoder.prototype._parseTypeEnum = function(_type, _io) {
         var numEntries = _io.readU2be();
         var entries = [];
         for (var i=0; i< numEntries; i++) {
-          var entry = _readTypedValue(RcpTypes.Datatype.TINY_STRING, _io);
+          var entry = _readTinyString(_io);
           if (TOIVerbose) console.log("adding entry: " + entry);
           entries.push(entry);
         }
@@ -1011,7 +1037,6 @@ ToiPacket = function(_command) {
 
   this.command = _command;
   this.data = null;
-  this.packetId = null;
   this.timestamp = null;
 }
 
@@ -1025,11 +1050,6 @@ ToiPacket.prototype.write = function(_array) {
   array.push(this.command);
 
   // write optionals
-  if (this.packetId != null) {
-    array.push(RcpTypes.PacketOptions.ID);
-    pushIn32ToArrayBe(this.packetId, array);
-  }
-
   if (this.timestamp != null) {
     array.push(RcpTypes.PacketOptions.TIMESTAMP);
     pushFloat64ToArrayBe(this.timestamp, array);
@@ -1088,7 +1108,10 @@ ToiParameter.prototype.cloneEmpty = function() {
 ToiParameter.prototype.write = function(array) {
 
   // write id
-  pushIn32ToArrayBe(this.id, array);
+  array.push(this.id.length);
+  var idarray = [].slice.call(this.id);
+  array = array.concat(idarray);
+
 
   // write type definition
   array = this.type.write(array);
@@ -1227,8 +1250,6 @@ ToiTypeDefinition.prototype.update = function(type) {
       break;
 
     // string
-    case RcpTypes.Datatype.TINY_STRING:
-    case RcpTypes.Datatype.SHORT_STRING:
     case RcpTypes.Datatype.STRING:
     case RcpTypes.Datatype.ENUM:
     default:
@@ -1295,8 +1316,6 @@ ToiTypeDefinition.prototype.write = function(array) {
       break;
 
     // string
-    case RcpTypes.Datatype.TINY_STRING:
-    case RcpTypes.Datatype.SHORT_STRING:
     case RcpTypes.Datatype.STRING:
       array = this._writeString(array);
       break;
