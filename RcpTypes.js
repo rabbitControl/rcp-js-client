@@ -1,5 +1,14 @@
 // This is a generated file! Please edit source .ksy file and use kaitai-struct-compiler to rebuild
 
+(function (root, factory) {
+  if (typeof define === 'function' && define.amd) {
+    define(['kaitai-struct/KaitaiStream'], factory);
+  } else if (typeof module === 'object' && module.exports) {
+    module.exports = factory(require('kaitai-struct/KaitaiStream'));
+  } else {
+    root.RcpTypes = factory(root.KaitaiStream);
+  }
+}(this, function (KaitaiStream) {
 var RcpTypes = (function() {
   RcpTypes.EnumOptions = Object.freeze({
     DEFAULT: 48,
@@ -153,6 +162,18 @@ var RcpTypes = (function() {
     4: "CENTER",
   });
 
+  RcpTypes.ClientStatus = Object.freeze({
+    DISCONNECTED: 0,
+    CONNECTED: 1,
+    VERSION_MISSMATCH: 2,
+    OK: 3,
+
+    0: "DISCONNECTED",
+    1: "CONNECTED",
+    2: "VERSION_MISSMATCH",
+    3: "OK",
+  });
+
   RcpTypes.StringOptions = Object.freeze({
     DEFAULT: 48,
 
@@ -171,37 +192,24 @@ var RcpTypes = (function() {
     UINT64: 24,
     FLOAT32: 25,
     FLOAT64: 26,
-    VECTOR2I8: 27,
-    VECTOR2I16: 28,
-    VECTOR2I32: 29,
-    VECTOR2I64: 30,
-    VECTOR2F32: 31,
-    VECTOR2F64: 32,
-    VECTOR3I8: 33,
-    VECTOR3I16: 34,
-    VECTOR3I32: 35,
-    VECTOR3I64: 36,
-    VECTOR3F32: 37,
-    VECTOR3F64: 38,
-    VECTOR4I8: 39,
-    VECTOR4I16: 40,
-    VECTOR4I32: 41,
-    VECTOR4I64: 42,
-    VECTOR4F32: 43,
-    VECTOR4F64: 44,
-    TINY_STRING: 45,
-    SHORT_STRING: 46,
-    STRING: 47,
-    RGB: 48,
-    RGBA: 49,
-    ENUM: 50,
-    FIXED_ARRAY: 51,
-    DYNAMIC_ARRAY: 52,
-    IMAGE: 54,
-    BANG: 55,
-    TIME: 56,
-    GROUP: 57,
-    COMPOUND: 58,
+    VECTOR2I32: 27,
+    VECTOR2F32: 28,
+    VECTOR3I32: 29,
+    VECTOR3F32: 30,
+    VECTOR4I32: 31,
+    VECTOR4F32: 32,
+    STRING: 33,
+    RGB: 34,
+    RGBA: 35,
+    ENUM: 36,
+    FIXED_ARRAY: 37,
+    DYNAMIC_ARRAY: 38,
+    BANG: 39,
+    GROUP: 40,
+    COMPOUND: 41,
+    URI: 42,
+    IPV4: 43,
+    IPV6: 44,
 
     16: "BOOLEAN",
     17: "INT8",
@@ -214,37 +222,24 @@ var RcpTypes = (function() {
     24: "UINT64",
     25: "FLOAT32",
     26: "FLOAT64",
-    27: "VECTOR2I8",
-    28: "VECTOR2I16",
-    29: "VECTOR2I32",
-    30: "VECTOR2I64",
-    31: "VECTOR2F32",
-    32: "VECTOR2F64",
-    33: "VECTOR3I8",
-    34: "VECTOR3I16",
-    35: "VECTOR3I32",
-    36: "VECTOR3I64",
-    37: "VECTOR3F32",
-    38: "VECTOR3F64",
-    39: "VECTOR4I8",
-    40: "VECTOR4I16",
-    41: "VECTOR4I32",
-    42: "VECTOR4I64",
-    43: "VECTOR4F32",
-    44: "VECTOR4F64",
-    45: "TINY_STRING",
-    46: "SHORT_STRING",
-    47: "STRING",
-    48: "RGB",
-    49: "RGBA",
-    50: "ENUM",
-    51: "FIXED_ARRAY",
-    52: "DYNAMIC_ARRAY",
-    54: "IMAGE",
-    55: "BANG",
-    56: "TIME",
-    57: "GROUP",
-    58: "COMPOUND",
+    27: "VECTOR2I32",
+    28: "VECTOR2F32",
+    29: "VECTOR3I32",
+    30: "VECTOR3F32",
+    31: "VECTOR4I32",
+    32: "VECTOR4F32",
+    33: "STRING",
+    34: "RGB",
+    35: "RGBA",
+    36: "ENUM",
+    37: "FIXED_ARRAY",
+    38: "DYNAMIC_ARRAY",
+    39: "BANG",
+    40: "GROUP",
+    41: "COMPOUND",
+    42: "URI",
+    43: "IPV4",
+    44: "IPV6",
   });
 
   RcpTypes.NumberOptions = Object.freeze({
@@ -274,11 +269,9 @@ var RcpTypes = (function() {
   });
 
   RcpTypes.PacketOptions = Object.freeze({
-    ID: 16,
     TIMESTAMP: 17,
     DATA: 18,
 
-    16: "ID",
     17: "TIMESTAMP",
     18: "DATA",
   });
@@ -294,20 +287,10 @@ var RcpTypes = (function() {
     this._parent = _parent;
     this._root = _root || this;
 
+    this._read();
   }
-
-  var TinyString = RcpTypes.TinyString = (function() {
-    function TinyString(_io, _parent, _root) {
-      this._io = _io;
-      this._parent = _parent;
-      this._root = _root || this;
-
-      this.myLen = this._io.readU1();
-      this.data = KaitaiStream.bytesToStr(this._io.readBytes(this.myLen), "UTF-8");
-    }
-
-    return TinyString;
-  })();
+  RcpTypes.prototype._read = function() {
+  }
 
   var ShortString = RcpTypes.ShortString = (function() {
     function ShortString(_io, _parent, _root) {
@@ -315,24 +298,14 @@ var RcpTypes = (function() {
       this._parent = _parent;
       this._root = _root || this;
 
+      this._read();
+    }
+    ShortString.prototype._read = function() {
       this.myLen = this._io.readU2be();
       this.data = KaitaiStream.bytesToStr(this._io.readBytes(this.myLen), "UTF-8");
     }
 
     return ShortString;
-  })();
-
-  var LongString = RcpTypes.LongString = (function() {
-    function LongString(_io, _parent, _root) {
-      this._io = _io;
-      this._parent = _parent;
-      this._root = _root || this;
-
-      this.myLen = this._io.readU4be();
-      this.data = KaitaiStream.bytesToStr(this._io.readBytes(this.myLen), "UTF-8");
-    }
-
-    return LongString;
   })();
 
   var Userdata = RcpTypes.Userdata = (function() {
@@ -341,6 +314,9 @@ var RcpTypes = (function() {
       this._parent = _parent;
       this._root = _root || this;
 
+      this._read();
+    }
+    Userdata.prototype._read = function() {
       this.myLen = this._io.readU4be();
       this.data = this._io.readBytes(this.myLen);
     }
@@ -348,17 +324,55 @@ var RcpTypes = (function() {
     return Userdata;
   })();
 
+  var LongString = RcpTypes.LongString = (function() {
+    function LongString(_io, _parent, _root) {
+      this._io = _io;
+      this._parent = _parent;
+      this._root = _root || this;
+
+      this._read();
+    }
+    LongString.prototype._read = function() {
+      this.myLen = this._io.readU4be();
+      this.data = KaitaiStream.bytesToStr(this._io.readBytes(this.myLen), "UTF-8");
+    }
+
+    return LongString;
+  })();
+
+  var Id = RcpTypes.Id = (function() {
+    function Id(_io, _parent, _root) {
+      this._io = _io;
+      this._parent = _parent;
+      this._root = _root || this;
+
+      this._read();
+    }
+    Id.prototype._read = function() {
+      this.myLen = this._io.readU1();
+      this.data = this._io.readBytes(this.myLen);
+    }
+
+    return Id;
+  })();
+
+  var TinyString = RcpTypes.TinyString = (function() {
+    function TinyString(_io, _parent, _root) {
+      this._io = _io;
+      this._parent = _parent;
+      this._root = _root || this;
+
+      this._read();
+    }
+    TinyString.prototype._read = function() {
+      this.myLen = this._io.readU1();
+      this.data = KaitaiStream.bytesToStr(this._io.readBytes(this.myLen), "UTF-8");
+    }
+
+    return TinyString;
+  })();
+
   return RcpTypes;
 })();
-
-// Export for amd environments
-if (typeof define === 'function' && define.amd) {
-  define('RcpTypes', [], function() {
-    return RcpTypes;
-  });
-}
-
-// Export for CommonJS
-if (typeof module === 'object' && module && module.exports) {
-  module.exports = RcpTypes;
-}
+return RcpTypes;
+}));
