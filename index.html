@@ -14,7 +14,7 @@
 <script type="text/javascript">
 
   function transformParamId(_id) {
-    return _id.toString().replace(",", "-");
+    return _id.toString().replace(/,/g, "-");
   }
 
   //
