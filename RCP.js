@@ -1,6 +1,6 @@
 
 // flag to control some verbose logging
-var TOIVerbose = false;
+var RCPVerbose = false;
 var TERMINATOR = 0;
 
 pushFloat64ToArrayBe = function(num, array) {
@@ -375,7 +375,7 @@ ToiClient.prototype._add = function(parameter) {
   }
 
   // ok, add it
-  if (TOIVerbose) console.log("adding parameter: " + JSON.stringify(parameter));
+  if (RCPVerbose) console.log("adding parameter: " + JSON.stringify(parameter));
   this.valueCache[parameter.id] = parameter;
 
   // console.log("this.valueCache: " + this.valueCache);
@@ -416,9 +416,6 @@ ToiClient.prototype._updateCache = function(parameter) {
 
   var cachedParam = this.valueCache[parameter.id];
 
-  console.log("parameter: " + parameter.id);
-  console.log("cachedParam: " + cachedParam.id);
-
   // update cached
   // check types...
   if (!arraysIdentical(parameter.id, cachedParam.id)) {
@@ -433,7 +430,7 @@ ToiClient.prototype._updateCache = function(parameter) {
 
   cachedParam.update(parameter);
 
-  if (TOIVerbose) console.log("updated cached parameter: " + JSON.stringify(cachedParam));
+  if (RCPVerbose) console.log("updated cached parameter: " + JSON.stringify(cachedParam));
 
   return true;
 }
@@ -548,6 +545,8 @@ TOISocket.prototype._onmessage = function(ev) {
 
   } else if (ev.data instanceof ArrayBuffer) {
 
+      //console.log("received: " + ev.data);
+
       if (this._.received) {
         this._.received(ev.data);
       }
@@ -595,8 +594,8 @@ TOISocket.prototype.open = function(address, port, ssl) {
 
 TOISocket.prototype.send = function(message) {
 
-  if (TOIVerbose) console.log("this.webSocket.readyState: " + this.webSocket.readyState);
-  if (TOIVerbose) console.log("typeof message: " + typeof message + " : " + (message instanceof Uint8Array) + ": " + message.constructor.name);
+  if (RCPVerbose) console.log("this.webSocket.readyState: " + this.webSocket.readyState);
+  if (RCPVerbose) console.log("typeof message: " + typeof message + " : " + (message instanceof Uint8Array) + ": " + message.constructor.name);
 
   if (this.webSocket.readyState == 1) {
 
@@ -639,7 +638,7 @@ TOIPacketDecoder.prototype = {};
 
 TOIPacketDecoder.prototype._receive = function(arraybuffer) {
 
-  if (TOIVerbose) {
+  if (RCPVerbose) {
     var view   = new Int8Array(arraybuffer);
     console.log(view);
   }
@@ -683,6 +682,9 @@ TOIPacketDecoder.prototype._receive = function(arraybuffer) {
   } catch(err) {
     console.log(err);
     console.log("error: " + err.message);
+
+    var view   = new Int8Array(arraybuffer);
+    console.log(view);
   }
 }
 
@@ -693,13 +695,13 @@ TOIPacketDecoder.prototype._parsePacket = function(_io) {
 
   var packet = new ToiPacket(cmd);
 
-  if (TOIVerbose) console.log("parse packet options");
+  if (RCPVerbose) console.log("parse packet options");
 
   // read packet options
   while (!_io.isEof()) {
 
     var dataid = _io.readU1();
-    if (TOIVerbose) console.log("option: " + dataid);
+    if (RCPVerbose) console.log("option: " + dataid);
 
     if (dataid == TERMINATOR) {
       break;
@@ -721,10 +723,10 @@ TOIPacketDecoder.prototype._parsePacket = function(_io) {
           case RcpTypes.Command.REMOVE:
           case RcpTypes.Command.UPDATE:
             // expect parameter
-            if (TOIVerbose) console.log("parse parameter");
+            if (RCPVerbose) console.log("parse parameter");
             packet.data = this._parseParameter(_io);
 
-            if (TOIVerbose) console.log("set packet data: " + JSON.stringify(packet.data));
+            if (RCPVerbose) console.log("set packet data: " + JSON.stringify(packet.data));
 
             break;
           case RcpTypes.Command.VERSION:
@@ -738,7 +740,7 @@ TOIPacketDecoder.prototype._parsePacket = function(_io) {
 
       case RcpTypes.PacketOptions.TIMESTAMP:
         packet.timestamp = _io.readU8be();
-        if (TOIVerbose) console.log("packet timestamp: " + packet.timestamp);
+        if (RCPVerbose) console.log("packet timestamp: " + packet.timestamp);
         break;
       default:
         throw "unknown data-id: " + dataid;
@@ -764,7 +766,7 @@ TOIPacketDecoder.prototype._parseParameter = function(_io) {
 
   var parameter = new ToiParameter(paramId, type);
 
-  if (TOIVerbose) console.log("parse parameter options");
+  if (RCPVerbose) console.log("parse parameter options");
 
   // get options from the stream
   while (true) {
@@ -779,28 +781,28 @@ TOIPacketDecoder.prototype._parseParameter = function(_io) {
     switch (dataid) {
       case RcpTypes.ParameterOptions.VALUE:
         parameter.value = _readTypedValue(type.typeid, _io);
-        if (TOIVerbose) console.log("parameter value:  " + parameter.value);
+        if (RCPVerbose) console.log("parameter value:  " + parameter.value);
         break;
 
       case RcpTypes.ParameterOptions.LABEL:
         parameter.label = _readTinyString(_io);
-        if (TOIVerbose) console.log("parameter label: " + parameter.label);
+        if (RCPVerbose) console.log("parameter label: " + parameter.label);
         break;
 
       case RcpTypes.ParameterOptions.DESCRIPTION:
         parameter.description = _readShortString(_io);
-        if (TOIVerbose) console.log("parameter desc: " + parameter.description);
+        if (RCPVerbose) console.log("parameter desc: " + parameter.description);
         break;
 
       case RcpTypes.ParameterOptions.ORDER:
         parameter.order = _io.readS4be();
-        if (TOIVerbose) console.log("parameter order: " + parameter.order);
+        if (RCPVerbose) console.log("parameter order: " + parameter.order);
         break;
 
       case RcpTypes.ParameterOptions.PARENT:
         // skip...
         parameter.parent = _io.readU4be();
-        if (TOIVerbose) console.log("parameter order: " + parameter.order);
+        if (RCPVerbose) console.log("parameter order: " + parameter.order);
         break;
 
       case RcpTypes.ParameterOptions.WIDGET:
@@ -811,7 +813,7 @@ TOIPacketDecoder.prototype._parseParameter = function(_io) {
       case RcpTypes.ParameterOptions.USERDATA:
         var ud = new RcpTypes.Userdata(_io);
         parameter.userdata = ud.data;
-        if (TOIVerbose) console.log("userdata set");
+        if (RCPVerbose) console.log("userdata set");
         break;
     }
   }
@@ -835,6 +837,7 @@ TOIPacketDecoder.prototype._parseTypeDefinition = function(_io) {
 
   switch (typeid) {
 
+    case RcpTypes.Datatype.GROUP:
     case RcpTypes.Datatype.BOOLEAN:
       this._parseTypeDefault(type, _io);
       break;
@@ -865,6 +868,9 @@ TOIPacketDecoder.prototype._parseTypeDefinition = function(_io) {
     case RcpTypes.Datatype.ENUM:
       this._parseTypeEnum(type, _io);
       break;
+
+    default:
+        console.log("not implemented type: " + RcpTypes.Datatype[typeid]);
   }
 
   if (type == null) {
@@ -887,7 +893,7 @@ TOIPacketDecoder.prototype._parseTypeDefault = function(_type, _io) {
 
   var type = _type;
 
-  if (TOIVerbose) console.log("parse default options");
+  if (RCPVerbose) console.log("parse default options");
 
   // parse optionals
   while (true) {
@@ -902,7 +908,7 @@ TOIPacketDecoder.prototype._parseTypeDefault = function(_type, _io) {
 
       case RcpTypes.StringOptions.DEFAULT:
         type.defaultValue = _readTypedValue(_type.typeid, _io);
-        if (TOIVerbose) console.log("parse default, default: " + type.defaultValue);
+        if (RCPVerbose) console.log("parse default, default: " + type.defaultValue);
         break;
 
       default:
@@ -922,7 +928,7 @@ TOIPacketDecoder.prototype._parseTypeNumber = function(_type, _io) {
     return;
   }
 
-  if (TOIVerbose) console.log("parse number options");
+  if (RCPVerbose) console.log("parse number options");
 
   var type = _type;
 
@@ -939,29 +945,29 @@ TOIPacketDecoder.prototype._parseTypeNumber = function(_type, _io) {
 
       case RcpTypes.NumberOptions.DEFAULT:
         type.defaultValue = _readTypedValue(_type.typeid, _io);
-        if (TOIVerbose) console.log("number default: " + type.defaultValue);
+        if (RCPVerbose) console.log("number default: " + type.defaultValue);
         break;
       case RcpTypes.NumberOptions.MINIMUM:
         type.min = _readTypedValue(_type.typeid, _io);
-        if (TOIVerbose) console.log("number min: " + type.min);
+        if (RCPVerbose) console.log("number min: " + type.min);
         break;
       case RcpTypes.NumberOptions.MAXIMUM:
         type.max = _readTypedValue(_type.typeid, _io);
-        if (TOIVerbose) console.log("number max: " + type.max);
+        if (RCPVerbose) console.log("number max: " + type.max);
         break;
       case RcpTypes.NumberOptions.MULTIPLEOF:
         type.multipleof = _readTypedValue(_type.typeid, _io);
-        if (TOIVerbose) console.log("number mult: " + type.multipleof);
+        if (RCPVerbose) console.log("number mult: " + type.multipleof);
         break;
 
       case RcpTypes.NumberOptions.SCALE:
         type.scale = _io.readU1();
-        if (TOIVerbose) console.log("number scale: " + type.scale);
+        if (RCPVerbose) console.log("number scale: " + type.scale);
         break;
 
       case RcpTypes.NumberOptions.UNIT:
         type.unit = _readTinyString(_io);
-        if (TOIVerbose) console.log("number unit: " + type.unit);
+        if (RCPVerbose) console.log("number unit: " + type.unit);
         break;
 
       default:
@@ -984,7 +990,7 @@ TOIPacketDecoder.prototype._parseTypeEnum = function(_type, _io) {
 
   var type = _type;
 
-  if (TOIVerbose) console.log("parse enum options");
+  if (RCPVerbose) console.log("parse enum options");
 
   // parse optionals
   while (true) {
@@ -999,18 +1005,18 @@ TOIPacketDecoder.prototype._parseTypeEnum = function(_type, _io) {
 
       case RcpTypes.EnumOptions.DEFAULT:
         type.defaultValue = _readTypedValue(_type.typeid, _io);
-        if (TOIVerbose) console.log("parse default, default: " + type.defaultValue);
+        if (RCPVerbose) console.log("parse default, default: " + type.defaultValue);
         break;
 
       case RcpTypes.EnumOptions.ENTRIES:
       {
-        if (TOIVerbose) console.log("parse entries...");
+        if (RCPVerbose) console.log("parse entries...");
 
         var numEntries = _io.readU2be();
         var entries = [];
         for (var i=0; i< numEntries; i++) {
           var entry = _readTinyString(_io);
-          if (TOIVerbose) console.log("adding entry: " + entry);
+          if (RCPVerbose) console.log("adding entry: " + entry);
           entries.push(entry);
         }
         type.entries = entries;
