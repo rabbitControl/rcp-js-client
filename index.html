@@ -26,6 +26,12 @@
 
     switch (parameter.type.typeid) {
 
+      case RcpTypes.Datatype.GROUP:
+      {
+        console.log("CREATE GROUP");
+      }
+        break;
+
       // create toggle
       case RcpTypes.Datatype.BOOLEAN:
       {
