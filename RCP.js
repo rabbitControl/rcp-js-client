@@ -404,13 +404,14 @@ function arraysIdentical(a, b) {
 ToiClient.prototype._updateCache = function(parameter) {
 
   if (!_validateParameter(parameter)) {
-    console.log("aaaa");
+    console.log("invalid parameter: " + parameter);
     return false;
   }
 
   // get value from cache
   if (!this.valueCache[parameter.id]) {
-    console.error("_updateCache: value not in data-cache... drop");
+    console.error("_updateCache: value not in data-cache... add it");
+    this._add(parameter);
     return false;
   }
 
@@ -658,10 +659,8 @@ TOIPacketDecoder.prototype._receive = function(arraybuffer) {
           this._packetListener._init(packet);
         }
         break;
-      case RcpTypes.Command.ADD:
-        if (this._packetListener != null) {
-          this._packetListener._add(packet.data);
-        }
+      case RcpTypes.Command.DISCOVER:
+        //
         break;
       case RcpTypes.Command.UPDATE:
         if (this._packetListener != null) {
@@ -719,7 +718,6 @@ TOIPacketDecoder.prototype._parsePacket = function(_io) {
             // init - ignore any data...
             break;
 
-          case RcpTypes.Command.ADD:
           case RcpTypes.Command.REMOVE:
           case RcpTypes.Command.UPDATE:
             // expect parameter
@@ -799,10 +797,14 @@ TOIPacketDecoder.prototype._parseParameter = function(_io) {
         if (RCPVerbose) console.log("parameter order: " + parameter.order);
         break;
 
-      case RcpTypes.ParameterOptions.PARENT:
-        // skip...
-        parameter.parent = _io.readU4be();
-        if (RCPVerbose) console.log("parameter order: " + parameter.order);
+      case RcpTypes.ParameterOptions.PARENTID:
+        {
+          var myLen = _io.readU1();
+          parameter.parentid = _io.readBytes(myLen);
+
+          if (RCPVerbose) console.log("parameter parent id: " + parameter.parentid);
+        }
+
         break;
 
       case RcpTypes.ParameterOptions.WIDGET:
@@ -1143,9 +1145,9 @@ ToiParameter.prototype.write = function(array) {
     pushIn32ToArrayBe(this.order, array);
   }
 
-  if (this.parent != null) {
-    array.push(RcpTypes.ParameterOptions.PARENT);
-    pushIn32ToArrayBe(this.parent, array);
+  if (this.parentid != null) {
+    array.push(RcpTypes.ParameterOptions.PARENTID);
+    pushIn32ToArrayBe(this.parentid, array);
   }
 
   if (this.widget != null) {

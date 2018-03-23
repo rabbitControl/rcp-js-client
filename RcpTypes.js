@@ -44,18 +44,26 @@ var RcpTypes = (function() {
     VALUE: 32,
     LABEL: 33,
     DESCRIPTION: 34,
-    ORDER: 35,
-    PARENT: 36,
-    WIDGET: 37,
-    USERDATA: 38,
+    TAGS: 35,
+    ORDER: 36,
+    PARENTID: 37,
+    WIDGET: 38,
+    USERDATA: 39,
 
     32: "VALUE",
     33: "LABEL",
     34: "DESCRIPTION",
-    35: "ORDER",
-    36: "PARENT",
-    37: "WIDGET",
-    38: "USERDATA",
+    35: "TAGS",
+    36: "ORDER",
+    37: "PARENTID",
+    38: "WIDGET",
+    39: "USERDATA",
+  });
+
+  RcpTypes.Ipv4Options = Object.freeze({
+    DEFAULT: 48,
+
+    48: "DEFAULT",
   });
 
   RcpTypes.VectorOptions = Object.freeze({
@@ -72,12 +80,6 @@ var RcpTypes = (function() {
     51: "MULTIPLEOF",
     52: "SCALE",
     53: "UNIT",
-  });
-
-  RcpTypes.CompoundOptions = Object.freeze({
-    DEFAULT: 48,
-
-    48: "DEFAULT",
   });
 
   RcpTypes.BooleanOptions = Object.freeze({
@@ -118,7 +120,7 @@ var RcpTypes = (function() {
     INVALID: 0,
     VERSION: 1,
     INITIALIZE: 2,
-    ADD: 3,
+    DISCOVER: 3,
     UPDATE: 4,
     REMOVE: 5,
     UPDATEVALUE: 6,
@@ -126,7 +128,7 @@ var RcpTypes = (function() {
     0: "INVALID",
     1: "VERSION",
     2: "INITIALIZE",
-    3: "ADD",
+    3: "DISCOVER",
     4: "UPDATE",
     5: "REMOVE",
     6: "UPDATEVALUE",
@@ -160,6 +162,16 @@ var RcpTypes = (function() {
     2: "TOP",
     3: "BOTTOM",
     4: "CENTER",
+  });
+
+  RcpTypes.UriOptions = Object.freeze({
+    DEFAULT: 48,
+    FILTER: 49,
+    SCHEMA: 50,
+
+    48: "DEFAULT",
+    49: "FILTER",
+    50: "SCHEMA",
   });
 
   RcpTypes.ClientStatus = Object.freeze({
@@ -206,7 +218,6 @@ var RcpTypes = (function() {
     DYNAMIC_ARRAY: 38,
     BANG: 39,
     GROUP: 40,
-    COMPOUND: 41,
     URI: 42,
     IPV4: 43,
     IPV6: 44,
@@ -236,7 +247,6 @@ var RcpTypes = (function() {
     38: "DYNAMIC_ARRAY",
     39: "BANG",
     40: "GROUP",
-    41: "COMPOUND",
     42: "URI",
     43: "IPV4",
     44: "IPV6",
@@ -256,6 +266,12 @@ var RcpTypes = (function() {
     51: "MULTIPLEOF",
     52: "SCALE",
     53: "UNIT",
+  });
+
+  RcpTypes.Ipv6Options = Object.freeze({
+    DEFAULT: 48,
+
+    48: "DEFAULT",
   });
 
   RcpTypes.MetadataOptions = Object.freeze({

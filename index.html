@@ -28,14 +28,16 @@
 
       case RcpTypes.Datatype.GROUP:
       {
-        console.log("CREATE GROUP");
+        var box = createGroup(parameter);
+
+        //updateParam(parameter);
       }
         break;
 
       // create toggle
       case RcpTypes.Datatype.BOOLEAN:
       {
-        var box = createCheckBox(parameter.id);
+        var box = createCheckBox(parameter);
 
         updateParam(parameter);
 
@@ -65,7 +67,7 @@
       {
         var box;
         if (parameter.type.min != null && parameter.type.max != null) {
-          box = createSlider(parameter.id);
+          box = createSlider(parameter);
 
           var input = $("#param-" + transformParamId(parameter.id));
 
@@ -85,7 +87,7 @@
           input.slider().slider('refresh');
 
         } else {
-          box = createNumberBox(parameter.id);
+          box = createNumberBox(parameter);
           updateParam(parameter);
         }
 
@@ -101,7 +103,7 @@
       case RcpTypes.Datatype.SHORT_STRING:
       case RcpTypes.Datatype.STRING:
       {
-        var box = createTextBox(parameter.id);
+        var box = createTextBox(parameter);
         updateParam(parameter);
 
         // last value CB
@@ -115,7 +117,7 @@
       case RcpTypes.Datatype.RGB:
       case RcpTypes.Datatype.RGBA:
       {
-        var box = createColorBox(parameter.id);
+        var box = createColorBox(parameter);
         updateParam(parameter);
 
         // last value CB
@@ -128,7 +130,7 @@
 
       case RcpTypes.Datatype.ENUM:
       {
-        var box = createSelectMenu(parameter.id, parameter.type.entries);
+        var box = createSelectMenu(parameter);
         updateParam(parameter);
 
         // last value CB
@@ -217,7 +219,7 @@
   //----------------------------------------------------
   // remove a parameter
   var removeParam = function(parameter) {
-    $("#content .cbGroup" + transformParamId(parameter.id)).remove();
+    $("#cbGroup" + transformParamId(parameter.id)).remove();
   };
 
 
@@ -234,95 +236,169 @@
   // ui creator
   //----------------------------------------------------
   //----------------------------------------------------
-  function createCheckBox(_id) {
+  function createGroup(parameter) {
+    /*
+    <div data-role="collapsible">
+      <h4>Heading</h4>
+      <p>I'm the collapsible content. By default I'm closed, but you can click the header to open me.</p>
+    </div>
+    */
 
-    var id = transformParamId(_id);
+    var id = transformParamId(parameter.id);
+
+    console.log("create group: " + id);
+
+    var newSet = '<fieldset data-role="controlgroup" id="cbGroup' + id + '"></fieldset>';
+    var newBox = $('<div data-role="collapsible" name="param-' + id + '" id="param-' + id + '" > <h4 id="label-' + id + '">' + parameter.label + '</h4> <div data-role="listview" id="param-' + id + '-list"/> </div>');
+
+    if (parameter.parentid != null) {
+
+      console.log(":::" + parameter.parentid);
+
+      container_name = "param-" + transformParamId(parameter.parentid) + "-list";
+
+      $("#" + container_name).append(newSet).trigger('create');
+    } else {
+      $('#content').append(newSet).trigger('create');
+    }
+
+    $("#cbGroup" + id).append(newBox).trigger('create');
+    $('<hr>').appendTo( "#cbGroup" + id );
+
+    return newBox;
+  }
+
+  function createCheckBox(parameter) {
+
+    var id = transformParamId(parameter.id);
 
     console.log("create checkbox: " + id);
 
-    var newSet = '<fieldset data-role="controlgroup" class="cbGroup' + id + '"></fieldset>';
-    $('#content').append(newSet);
+    var newSet = '<fieldset data-role="controlgroup" id="cbGroup' + id + '"></fieldset>';
+    var newBox = $('<input type="checkbox" class="ui-collapsible-content" name="param-' + id + '" id="param-' + id + '" class="custom" /> <label for="param-'+ id + '" id="label-' + id + '">toggle</label>');
 
-    var newBox = $('<input type="checkbox" name="param-' + id + '" id="param-' + id + '" class="custom" /> <label for="param-'+ id + '" id="label-' + id + '">I agree</label>');
-    $("#content .cbGroup" + id).append(newBox).trigger('create');
-    $('<hr>').appendTo( "#content .cbGroup" + id )
+    if (parameter.parentid != null) {
+
+      console.log(":::" + parameter.parentid);
+
+      container_name = "param-" + transformParamId(parameter.parentid) + "-list";
+
+      $("#" + container_name).append(newSet);
+    } else {
+      $('#content').append(newSet);
+    }
+
+    $("#cbGroup" + id).append(newBox).trigger('create');
+    $('<hr>').appendTo( "#cbGroup" + id );
 
     return newBox;
   }
 
-  function createSlider(_id) {
+  function createSlider(parameter) {
 
-    var id = transformParamId(_id);
+    var id = transformParamId(parameter.id);
 
     console.log("create slider: " + id);
 
-    var newSet = '<fieldset data-role="controlgroup" class="cbGroup' + id + '"></fieldset>';
-    $('#content').append(newSet);
-
+    var newSet = '<fieldset data-role="controlgroup" id="cbGroup' + id + '"></fieldset>';
     var newBox = $('<label for="param-' + id + '" id="label-' + id + '" > slider: </label> <input id="param-' + id + '" type="number" data-type="range" data-highlight="true" min="0" max="100" step="1" value="0">');
-    $("#content .cbGroup" + id).append(newBox).trigger('create');
-    $('<hr>').appendTo( "#content .cbGroup" + id )
+
+    if (parameter.parentid != null) {
+
+      container_name = "param-" + transformParamId(parameter.parentid) + "-list";
+
+      $("#" + container_name).append(newSet);
+    } else {
+      $('#content').append(newSet);
+    }
+
+    $("#cbGroup" + id).append(newBox).trigger('create');
+    $('<hr>').appendTo( "#cbGroup" + id );
+
 
     return newBox;
   }
 
-  function createNumberBox(_id) {
+  function createNumberBox(parameter) {
 
-    var id = transformParamId(_id);
+    var id = transformParamId(parameter.id);
 
     console.log("create numberbox: " + id);
 
-    var newSet = '<fieldset data-role="controlgroup" class="cbGroup' + id + '"></fieldset>';
-    $('#content').append(newSet);
-
+    var newSet = '<fieldset data-role="controlgroup" id="cbGroup' + id + '"></fieldset>';
     var newBox = $('<label for="param-' + id + '" id="label-' + id + '" > Number: </label> <input type="number" data-clear-btn="false" name="param-'+ id +'" id="param-' + id + '" value="0" />');
-    $("#content .cbGroup" + id).append(newBox).trigger('create');
-    $('<hr>').appendTo( "#content .cbGroup" + id )
+
+    if (parameter.parentid != null) {
+
+      container_name = "param-" + transformParamId(parameter.parentid) + "-list";
+
+      $("#" + container_name).append(newSet);
+    } else {
+      $('#content').append(newSet);
+    }
+
+    $("#cbGroup" + id).append(newBox).trigger('create');
+    $('<hr>').appendTo( "#cbGroup" + id );
 
     return newBox;
   }
 
-  function createTextBox(_id) {
+  function createTextBox(parameter) {
 
-    var id = transformParamId(_id);
+    var id = transformParamId(parameter.id);
 
     console.log("create textbox: " + id);
 
-    var newSet = '<fieldset data-role="controlgroup" class="cbGroup' + id + '"></fieldset>';
-    $('#content').append(newSet);
-
+    var newSet = '<fieldset data-role="controlgroup" id="cbGroup' + id + '"></fieldset>';
     var newBox = $('<label for="param-' + id + '" id="label-' + id + '" > Text: </label> <input type="text" name="param-'+id+'" id="param-'+id+'" value="">');
-    $("#content .cbGroup" + id).append(newBox).trigger('create');
-    $('<hr>').appendTo( "#content .cbGroup" + id );
+
+    if (parameter.parentid != null) {
+
+      container_name = "param-" + transformParamId(parameter.parentid) + "-list";
+
+      $("#" + container_name).append(newSet);
+    } else {
+      $('#content').append(newSet);
+    }
+
+    $("#cbGroup" + id).append(newBox).trigger('create');
+    $('<hr>').appendTo( "#cbGroup" + id );
 
     return newBox;
   }
 
-  function createColorBox(_id) {
+  function createColorBox(parameter) {
 
-    var id = transformParamId(_id);
+    var id = transformParamId(parameter.id);
 
     console.log("create colorbox: " + id);
 
-    var newSet = '<fieldset data-role="controlgroup" class="cbGroup' + id + '"></fieldset>';
-    $('#content').append(newSet);
-
+    var newSet = '<fieldset data-role="controlgroup" id="cbGroup' + id + '"></fieldset>';
     var newBox = $('<label for="param-' + id + '" id="label-' + id + '" > Text: </label> <input type="color" name="param-'+id+'" id="param-'+id+'" value="">');
-    $("#content .cbGroup" + id).append(newBox).trigger('create');
-    $('<hr>').appendTo( "#content .cbGroup" + id );
+
+    if (parameter.parentid != null) {
+
+      container_name = "param-" + transformParamId(parameter.parentid) + "-list";
+
+      $("#" + container_name).append(newSet);
+
+    } else {
+      $('#content').append(newSet);
+    }
+
+    $("#cbGroup" + id).append(newBox).trigger('create');
+    $('<hr>').appendTo( "#cbGroup" + id );
 
     return newBox;
   }
 
-  function createSelectMenu(_id, entries) {
+  function createSelectMenu(parameter) {
 
-    var id = transformParamId(_id);
+    var id = transformParamId(parameter.id);
 
     console.log("create select menu: " + id);
 
-    var newSet = '<fieldset data-role="controlgroup" class="cbGroup' + id + '"></fieldset>';
-    $('#content').append(newSet);
-
+    var newSet = '<fieldset data-role="controlgroup" id="cbGroup' + id + '"></fieldset>';
     /*
     <form>
     <div class="ui-field-contain">
@@ -340,9 +416,9 @@
     var boxstring = '<label for="param-' + id + '" id="label-' + id + '" > ENUM: </label>\
     <select name="param-'+id+'" id="param-'+id+'">';
 
-    if (entries != null) {
+    if (parameter.type.entries != null) {
       var i=0;
-      entries.forEach(function(element) {
+      parameter.type.entries.forEach(function(element) {
           boxstring += '<option value="' + i + '" id="option-' + id + '-' + i + '">' + element + '</option>';
           i++;
       });
@@ -351,8 +427,18 @@
     boxstring += '</select>';
 
     var newBox = $(boxstring);
-    $("#content .cbGroup" + id).append(newBox).trigger('create');
-    $('<hr>').appendTo( "#content .cbGroup" + id );
+
+    if (parameter.parentid != null) {
+
+      container_name = "param-" + transformParamId(parameter.parentid) + "-list";
+
+      $("#" + container_name).append(newSet);
+    } else {
+      $('#content').append(newSet);
+    }
+
+    $("#cbGroup" + id).append(newBox).trigger('create');
+    $('<hr>').appendTo( "#cbGroup" + id );
 
     return newBox;
   }
