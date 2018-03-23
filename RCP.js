@@ -805,7 +805,7 @@ TOIPacketDecoder.prototype._parseParameter = function(_io) {
             parameter.parentid = _io.readBytes(myLen);
             if (RCPVerbose) console.log("parameter parent id: " + parameter.parentid);
           } else {
-            parameter.parentid = 0;
+            parameter.parentid = null;
           }
         }
 
