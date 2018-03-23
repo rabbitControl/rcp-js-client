@@ -1,6 +1,6 @@
 
 // flag to control some verbose logging
-var RCPVerbose = false;
+var RCPVerbose = true;
 var TERMINATOR = 0;
 
 pushFloat64ToArrayBe = function(num, array) {
@@ -800,9 +800,13 @@ TOIPacketDecoder.prototype._parseParameter = function(_io) {
       case RcpTypes.ParameterOptions.PARENTID:
         {
           var myLen = _io.readU1();
-          parameter.parentid = _io.readBytes(myLen);
 
-          if (RCPVerbose) console.log("parameter parent id: " + parameter.parentid);
+          if (myLen > 0) {
+            parameter.parentid = _io.readBytes(myLen);
+            if (RCPVerbose) console.log("parameter parent id: " + parameter.parentid);
+          } else {
+            parameter.parentid = 0;
+          }
         }
 
         break;
@@ -1102,6 +1106,7 @@ ToiParameter = function(_id, _type) {
   this.label = null;
   this.description = null;;
   this.order = null;
+  this.parentid = null;
   this.widget = null;
   this.userdata = null;
 };
