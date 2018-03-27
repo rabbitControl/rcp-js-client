@@ -29,6 +29,38 @@ pushFloat32ToArrayBe = function(num, array) {
   array.push(dataview.getUint8(0));
 };
 
+pushIn64ToArrayBe = function(num, array) {
+
+  // TODO: this needs attention!
+  
+  // console.log(num + " : "+  4294967295);
+  // var rest = (num | 0) >> 16;
+  //
+  // console.log("rest: " + rest);
+  //
+  // if (rest < 0) {
+  //   rest = 0;
+  // }
+  var rest = 0;
+
+  // string length
+  var arr32 = new Uint32Array([rest]);
+  var dataview = new DataView(arr32.buffer);
+  array.push(dataview.getUint8(3));
+  array.push(dataview.getUint8(2));
+  array.push(dataview.getUint8(1));
+  array.push(dataview.getUint8(0));
+
+  arr32 = new Uint32Array([num]);
+  dataview = new DataView(arr32.buffer);
+  array.push(dataview.getUint8(3));
+  array.push(dataview.getUint8(2));
+  array.push(dataview.getUint8(1));
+  array.push(dataview.getUint8(0));
+
+  console.log("array: " + array);
+};
+
 pushIn32ToArrayBe = function(num, array) {
 
   // string length
@@ -219,7 +251,7 @@ _writeTypedValue = function(_typeid, value, array) {
       break;
     case RcpTypes.Datatype.INT64:
     case RcpTypes.Datatype.UINT64:
-      pushFloat64ToArrayBe(value, array);
+      pushIn64ToArrayBe(value, array);
       break;
     case RcpTypes.Datatype.FLOAT32:
       pushFloat32ToArrayBe(value, array);
@@ -678,6 +710,7 @@ TOIPacketDecoder.prototype._receive = function(arraybuffer) {
         }
         break;
       case RcpTypes.Command.DISCOVER:
+        console.log("ERROR: received DISCOVER");
         //
         break;
       case RcpTypes.Command.UPDATE:
@@ -1082,7 +1115,7 @@ ToiPacket.prototype.write = function(_array) {
   // write optionals
   if (this.timestamp != null) {
     array.push(RcpTypes.PacketOptions.TIMESTAMP);
-    pushFloat64ToArrayBe(this.timestamp, array);
+    pushIn64ToArrayBe(this.timestamp, array);
   }
 
   if (this.data != null) {
