@@ -2,9 +2,9 @@
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 
-  <link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css" />
-  <script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
-  <script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
+  <link rel="stylesheet" href="dep/jquery.mobile-1.4.5.min.css" />
+  <script src="dep/jquery-1.11.1.min.js"></script>
+  <script src="dep/jquery.mobile-1.4.5.min.js"></script>
 
   <script src="KaitaiStream.js" type="text/javascript"></script>
   <script src="Optionstest.js" type="text/javascript"></script>
@@ -453,19 +453,60 @@
   client.update = updateParam;
   client.remove = removeParam;
 
-  var host = window.location.hostname;
-  console.log("hostname: " + host);
-  if (host == null || host == undefined || host == "") {
-    host = "localhost";
+  client.setonclose(myonclose);
+  client.setonerror(myerror);
+
+  function init() {
+    var host = window.location.hostname;
+    if (host == null || host == undefined || host == "") {
+      host = "localhost";
+    }
+    $('#hostInput').val(host);
   }
 
-  // open a connection to server
-  client.open(host, 10000);
+  function resetUI() {
+    $('#content').empty();
+    $('#head').show();
+  }
+
+  function myonclose() {
+    $('#error').html("connection closed...");
+    resetUI();
+  }
+
+  function myerror(error) {
+    console.log("error on socket: " + JSON.stringify(error));
+    $('#error').html("error connecting. error: " + JSON.stringify(error));
+    resetUI();
+  }
+
+  function doConnect() {
+    $('#error').html("");
+    console.log("host: " + $('#hostInput').val());
+    console.log("port: " + $('#portInput').val());
+
+    // open a connection to server
+    client.open($('#hostInput').val(), parseInt($('#portInput').val()));
+
+    $('#head').hide();
+  }
+
 </script>
 
 </head>
 
-<body>
+<body onload="init()">
+
+  <div id="head" style="margin:10px;">
+
+    <fieldset data-role="controlgroup" id="headGroup" data-type="horizontal">
+    <label for="hostInput" id="labelHost"> Host: </label><input type="text" name="hostInput" id="hostInput" value="localhost" />
+    <label for="portInput" id="labelPort"> Port: </label><input type="text" name="portInput" id="portInput" value="10000" />
+    <button onclick="doConnect();">connect</button>
+    </fieldset>
+    <div id="error"></div>
+
+  </div>
 
 <!-- content container-->
 <div id="content" style="margin:10px;">
