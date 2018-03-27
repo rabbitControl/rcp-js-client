@@ -318,6 +318,13 @@ ToiClient.prototype.open = function(address, port, ssl) {
   this.socket.open(address, port, ssl);
 }
 
+ToiClient.prototype.setonclose = function(func) {
+  this.socket.onclosecb = func;
+}
+ToiClient.prototype.setonerror = function(func) {
+  this.socket.onerrorcb = func;
+}
+
 ToiClient.prototype.valueUpdate = function(id, value) {
 
   var cachedParam = this.valueCache[id];
@@ -490,6 +497,9 @@ function TOISocket() {
   this._decoder = null;
 
   this.received = null;
+
+  this.onclosecb = null;
+  this.onerrorcb = null;
 };
 
 
@@ -513,11 +523,19 @@ TOISocket.prototype._onopen = function(e) {
 TOISocket.prototype._onclose = function(e) {
   // this = WebSocket!
   console.log("WebSocket closed " + this.url);
+
+  if (this._.onclosecb) {
+    this._.onclosecb();
+  }
 };
 
 TOISocket.prototype._onerror = function(error) {
   // this = WebSocket!
   console.log("Error detected: " + error + ": " + JSON.stringify(error));
+
+  if (this._.onerrorcb) {
+    this._.onerrorcb(error);
+  }
 };
 
 TOISocket.prototype._onmessage = function(ev) {
