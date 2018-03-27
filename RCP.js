@@ -1,6 +1,6 @@
 
 // flag to control some verbose logging
-var RCPVerbose = true;
+var RCPVerbose = false;
 var TERMINATOR = 0;
 
 pushFloat64ToArrayBe = function(num, array) {
@@ -32,7 +32,7 @@ pushFloat32ToArrayBe = function(num, array) {
 pushIn64ToArrayBe = function(num, array) {
 
   // TODO: this needs attention!
-  
+
   // console.log(num + " : "+  4294967295);
   // var rest = (num | 0) >> 16;
   //
@@ -350,6 +350,11 @@ ToiClient.prototype.open = function(address, port, ssl) {
   this.socket.open(address, port, ssl);
 }
 
+
+ToiClient.prototype.clear = function() {
+  // open address
+  this.valueCache = {};
+}
 ToiClient.prototype.setonclose = function(func) {
   this.socket.onclosecb = func;
 }
