@@ -843,6 +843,11 @@ TOIPacketDecoder.prototype._parseParameter = function(_io) {
         if (RCPVerbose) console.log("parameter desc: " + parameter.description);
         break;
 
+      case RcpTypes.ParameterOptions.TAGS:
+        parameter.tags = _readTinyString(_io);
+        if (RCPVerbose) console.log("parameter tags: " + parameter.tags);
+        break;
+
       case RcpTypes.ParameterOptions.ORDER:
         parameter.order = _io.readS4be();
         if (RCPVerbose) console.log("parameter order: " + parameter.order);
@@ -870,7 +875,12 @@ TOIPacketDecoder.prototype._parseParameter = function(_io) {
       case RcpTypes.ParameterOptions.USERDATA:
         var ud = new RcpTypes.Userdata(_io);
         parameter.userdata = ud.data;
-        if (RCPVerbose) console.log("userdata set");
+        if (RCPVerbose) console.log("userdata set: " + parameter.userdata);
+        break;
+
+      case RcpTypes.ParameterOptions.USERID:
+        parameter.userid = _readTinyString(_io);
+        if (RCPVerbose) console.log("parameter userid: " + parameter.userid);
         break;
     }
   }
@@ -1155,11 +1165,13 @@ ToiParameter = function(_id, _type) {
   // optionals
   this.value = null;
   this.label = null;
-  this.description = null;;
+  this.description = null;
+  this.tags = null;
   this.order = null;
   this.parentid = null;
   this.widget = null;
   this.userdata = null;
+  this.userid = null;
 };
 
 ToiParameter.prototype = {};
@@ -1196,6 +1208,11 @@ ToiParameter.prototype.write = function(array) {
     array = writeShortString(this.description, array);
   }
 
+  if (this.tags != null) {
+    array.push(RcpTypes.ParameterOptions.TAGS);
+    array = writeTinyString(this.tags, array);
+  }
+
   if (this.order != null) {
     array.push(RcpTypes.ParameterOptions.ORDER);
     pushIn32ToArrayBe(this.order, array);
@@ -1217,6 +1234,11 @@ ToiParameter.prototype.write = function(array) {
 
     var userarray = [].slice.call(this.userdata);
     array = array.concat(userarray);
+  }
+
+  if (this.userid != null) {
+    array.push(RcpTypes.ParameterOptions.USERID);
+    array = writeTinyString(this.userid, array);
   }
 
   array.push(TERMINATOR);
@@ -1254,6 +1276,10 @@ ToiParameter.prototype.update = function(parameter) {
     this.description = parameter.description;
   }
 
+  if (parameter.tags != null) {
+    this.tags = parameter.tags;
+  }
+
   if (parameter.order != null) {
     this.order = parameter.order;
   }
@@ -1265,6 +1291,10 @@ ToiParameter.prototype.update = function(parameter) {
 
   if (parameter.userdata != null) {
     this.userdata = parameter.userdata;
+  }
+
+  if (parameter.userid != null) {
+    this.userid = parameter.userid;
   }
 };
 

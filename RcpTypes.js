@@ -49,6 +49,7 @@ var RcpTypes = (function() {
     PARENTID: 37,
     WIDGET: 38,
     USERDATA: 39,
+    USERID: 40,
 
     32: "VALUE",
     33: "LABEL",
@@ -58,6 +59,7 @@ var RcpTypes = (function() {
     37: "PARENTID",
     38: "WIDGET",
     39: "USERDATA",
+    40: "USERID",
   });
 
   RcpTypes.Ipv4Options = Object.freeze({
