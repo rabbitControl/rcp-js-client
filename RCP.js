@@ -874,7 +874,10 @@ TOIPacketDecoder.prototype._parseParameter = function(_io) {
 
       case RcpTypes.ParameterOptions.WIDGET:
         // skip...
-        console.log("widget not implemented");
+        console.log("widget not implemented, skipping...");
+		while (_io.readU1() != 0)
+		{}
+
         break;
 
       case RcpTypes.ParameterOptions.USERDATA:
