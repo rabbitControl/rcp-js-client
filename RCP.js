@@ -812,8 +812,7 @@ TOIPacketDecoder.prototype._parsePacket = function(_io) {
 TOIPacketDecoder.prototype._parseParameter = function(_io) {
 
   // get mandatory id
-  var myLen = _io.readU1();
-  var paramId = _io.readBytes(myLen);
+  var paramId = _io.readS2be();
 
   // get mandatory type
   var type = this._parseTypeDefinition(_io);
@@ -859,17 +858,8 @@ TOIPacketDecoder.prototype._parseParameter = function(_io) {
         break;
 
       case RcpTypes.ParameterOptions.PARENTID:
-        {
-          var myLen = _io.readU1();
-
-          if (myLen > 0) {
-            parameter.parentid = _io.readBytes(myLen);
-            if (RCPVerbose) console.log("parameter parent id: " + parameter.parentid);
-          } else {
-            parameter.parentid = null;
-          }
-        }
-
+        parameter.parentid = _io.readS2be();
+        if (RCPVerbose) console.log("parameter parentid: " + parameter.parentid);
         break;
 
       case RcpTypes.ParameterOptions.WIDGET:
@@ -1189,10 +1179,7 @@ ToiParameter.prototype.cloneEmpty = function() {
 ToiParameter.prototype.write = function(array) {
 
   // write id
-  array.push(this.id.length);
-  var idarray = [].slice.call(this.id);
-  array = array.concat(idarray);
-
+  pushIn16ToArrayBe(this.id, array);
 
   // write type definition
   array = this.type.write(array);
@@ -1225,7 +1212,7 @@ ToiParameter.prototype.write = function(array) {
 
   if (this.parentid != null) {
     array.push(RcpTypes.ParameterOptions.PARENTID);
-    pushIn32ToArrayBe(this.parentid, array);
+    pushIn16ToArrayBe(this.parentid, array);
   }
 
   if (this.widget != null) {
