@@ -1,6 +1,6 @@
 
 // flag to control some verbose logging
-var RCPVerbose = false;
+var RCPVerbose = true;
 var TERMINATOR = 0;
 
 pushFloat64ToArrayBe = function(num, array) {
@@ -214,11 +214,17 @@ _readTypedValue = function(_typeid, _io) {
 
     // string
     case RcpTypes.Datatype.STRING:
+    {
       var strObj = new RcpTypes.LongString(_io);
       return strObj.data;
+    }
 
     case RcpTypes.Datatype.ENUM:
-      return _io.readU2be();
+    {
+      var strObj = new RcpTypes.TinyString(_io);
+      return strObj.data;
+    }
+
 
     case RcpTypes.Datatype.RGB:
     case RcpTypes.Datatype.RGBA:
@@ -266,7 +272,7 @@ _writeTypedValue = function(_typeid, value, array) {
       break;
 
     case RcpTypes.Datatype.ENUM:
-      pushIn16ToArrayBe(value, array);
+      array = writeTinyString(value, array);
       break;
 
     case RcpTypes.Datatype.RGBA:
@@ -514,6 +520,10 @@ ToiClient.prototype._remove = function(parameter) {
   if (this.remove != null) { // TODO ensure its a function?
     this.remove(parameter);
   }
+}
+
+ToiClient.prototype.getCachedParameter = function(id) {
+  return this.valueCache[id];
 }
 
 //-----------------------------------------------------------------------------
@@ -1069,7 +1079,7 @@ TOIPacketDecoder.prototype._parseTypeEnum = function(_type, _io) {
     switch (dataid) {
 
       case RcpTypes.EnumOptions.DEFAULT:
-        type.defaultValue = _readTypedValue(_type.typeid, _io);
+        type.defaultValue = _readTinyString(_io);
         if (RCPVerbose) console.log("parse default, default: " + type.defaultValue);
         break;
 
@@ -1077,13 +1087,19 @@ TOIPacketDecoder.prototype._parseTypeEnum = function(_type, _io) {
       {
         if (RCPVerbose) console.log("parse entries...");
 
-        var numEntries = _io.readU2be();
         var entries = [];
-        for (var i=0; i< numEntries; i++) {
+
+        while (true) {
           var entry = _readTinyString(_io);
+          if (entry.length == 0) {
+            break;
+          }
+
           if (RCPVerbose) console.log("adding entry: " + entry);
           entries.push(entry);
         }
+
+        if (RCPVerbose) console.log("adding entry: " + entry);
         type.entries = entries;
       }
         break;
@@ -1436,7 +1452,6 @@ ToiTypeDefinition.prototype._writeString = function(array) {
 
   if (this.defaultValue != null) {
     array.push(RcpTypes.StringOptions.DEFAULT);
-
     array = writeLongString(this.defaultValue, array);
   }
 
@@ -1447,12 +1462,12 @@ ToiTypeDefinition.prototype._writeEnum = function(array) {
 
   if (this.defaultValue != null) {
     array.push(RcpTypes.StringOptions.DEFAULT);
-
-    array = _writeTypedValue(this.typeid, this.defaultValue, array);
+    array = writeTinyString(this.defaultValue, array);
   }
 
   if (this.entries != null) {
     // nop - dont write 'em out
+    console.log("skip writing enum entries");
   }
 
   return array;

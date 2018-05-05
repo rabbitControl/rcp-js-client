@@ -137,7 +137,8 @@
         // last value CB
         var id = transformParamId(parameter.id);
         $("#param-"+id).change(function() {
-          valueChange(parameter.id, $("#param-"+id).val());
+          var strVal = parameter.type.entries[$("#param-"+id).val()];
+          valueChange(parameter.id, strVal);
         });
       }
         break;
@@ -157,12 +158,30 @@
     // don't send variable back on updateParam
     // ugly hack - do this differently
     sendUpdate = false;
+    var id = transformParamId(parameter.id);
 
-    var input = $('#param-'+transformParamId(parameter.id));
+    var input = $('#param-' + id);
 
     if (parameter.value != null) {
 
-      input.val(parameter.value);
+
+
+      // handle enum (string to index)
+      if (parameter.type.typeid == RcpTypes.Datatype.ENUM) {
+
+        // get cached parameter...
+        console.log("UPDATING ENUM");
+        var cachedParam = client.getCachedParameter(parameter.id);
+
+        for (var i=0; i<cachedParam.type.entries.length; i++) {
+          if (cachedParam.type.entries[i] == parameter.value) {
+            input.val(i);
+            break;
+          }
+        }
+      } else {
+        input.val(parameter.value);
+      }
 
       if (input.checkboxradio != null) {
         input.prop('checked', parameter.value);
@@ -170,7 +189,11 @@
     }
 
     if (parameter.label) {
-      var label = $('#label-'+transformParamId(parameter.id));
+      console.log("setting label: " + id + " : " + parameter.label );
+      var label = $('#label-' + id);
+
+      console.log(JSON.stringify(label));
+
       label.text(parameter.label + ":");
     }
 
@@ -252,7 +275,7 @@
     var newSet = '<fieldset data-role="controlgroup" id="cbGroup' + id + '"></fieldset>';
     var newBox = $('<div data-role="collapsible" name="param-' + id + '" id="param-' + id + '" > <h4 id="label-' + id + '">' + parameter.label + '</h4> <div data-role="listview" id="param-' + id + '-list"/> </div>');
 
-    if (parameter.parentid != null) {
+    if (parameter.parentid != null && parameter.parentid != 0) {
 
       console.log(":::" + parameter.parentid);
 
@@ -278,7 +301,7 @@
     var newSet = '<fieldset data-role="controlgroup" id="cbGroup' + id + '"></fieldset>';
     var newBox = $('<input type="checkbox" class="ui-collapsible-content" name="param-' + id + '" id="param-' + id + '" class="custom" /> <label for="param-'+ id + '" id="label-' + id + '">toggle</label>');
 
-    if (parameter.parentid != null) {
+    if (parameter.parentid != null && parameter.parentid != 0) {
 
       console.log(":::" + parameter.parentid);
 
@@ -304,7 +327,7 @@
     var newSet = '<fieldset data-role="controlgroup" id="cbGroup' + id + '"></fieldset>';
     var newBox = $('<label for="param-' + id + '" id="label-' + id + '" > slider: </label> <input id="param-' + id + '" type="number" data-type="range" data-highlight="true" min="0" max="100" step="1" value="0">');
 
-    if (parameter.parentid != null) {
+    if (parameter.parentid != null && parameter.parentid != 0) {
 
       container_name = "param-" + transformParamId(parameter.parentid) + "-list";
 
@@ -329,7 +352,7 @@
     var newSet = '<fieldset data-role="controlgroup" id="cbGroup' + id + '"></fieldset>';
     var newBox = $('<label for="param-' + id + '" id="label-' + id + '" > Number: </label> <input type="number" data-clear-btn="false" name="param-'+ id +'" id="param-' + id + '" value="0" />');
 
-    if (parameter.parentid != null) {
+    if (parameter.parentid != null && parameter.parentid != 0) {
 
       container_name = "param-" + transformParamId(parameter.parentid) + "-list";
 
@@ -353,7 +376,7 @@
     var newSet = '<fieldset data-role="controlgroup" id="cbGroup' + id + '"></fieldset>';
     var newBox = $('<label for="param-' + id + '" id="label-' + id + '" > Text: </label> <input type="text" name="param-'+id+'" id="param-'+id+'" value="">');
 
-    if (parameter.parentid != null) {
+    if (parameter.parentid != null && parameter.parentid != 0) {
 
       container_name = "param-" + transformParamId(parameter.parentid) + "-list";
 
@@ -377,7 +400,7 @@
     var newSet = '<fieldset data-role="controlgroup" id="cbGroup' + id + '"></fieldset>';
     var newBox = $('<label for="param-' + id + '" id="label-' + id + '" > Text: </label> <input type="color" name="param-'+id+'" id="param-'+id+'" value="">');
 
-    if (parameter.parentid != null) {
+    if (parameter.parentid != null && parameter.parentid != 0) {
 
       container_name = "param-" + transformParamId(parameter.parentid) + "-list";
 
@@ -429,7 +452,7 @@
 
     var newBox = $(boxstring);
 
-    if (parameter.parentid != null) {
+    if (parameter.parentid != null && parameter.parentid != 0) {
 
       container_name = "param-" + transformParamId(parameter.parentid) + "-list";
 
