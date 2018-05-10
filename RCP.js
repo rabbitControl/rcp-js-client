@@ -3,6 +3,19 @@
 var RCPVerbose = true;
 var TERMINATOR = 0;
 
+var languages = [];
+var languageAddedCB = null;
+
+collectLanguage = function(lang_code) {
+  if (!languages.includes(lang_code)) {
+    if (languageAddedCB != null) {
+      languageAddedCB(lang_code, languages.length);
+    }
+
+    languages.push(lang_code);
+  }
+}
+
 pushFloat64ToArrayBe = function(num, array) {
 
   // string length
@@ -842,20 +855,75 @@ TOIPacketDecoder.prototype._parseParameter = function(_io) {
     }
 
     switch (dataid) {
-      case RcpTypes.ParameterOptions.VALUE:
+      case RcpTypes.ParameterOptions.VALUE: {
         parameter.value = _readTypedValue(type.typeid, _io);
         if (RCPVerbose) console.log("parameter value:  " + parameter.value);
         break;
+      }
 
-      case RcpTypes.ParameterOptions.LABEL:
-        parameter.label = _readTinyString(_io);
-        if (RCPVerbose) console.log("parameter label: " + parameter.label);
-        break;
+      case RcpTypes.ParameterOptions.LABEL: {
 
-      case RcpTypes.ParameterOptions.DESCRIPTION:
-        parameter.description = _readShortString(_io);
-        if (RCPVerbose) console.log("parameter desc: " + parameter.description);
+        var current = _io.pos;
+        var peek_one = _io.readS1();
+
+        while (peek_one != 0) {
+          // rewind
+          _io.seek(current);
+
+          var lang_code = KaitaiStream.bytesToStr(_io.readBytes(3));
+          var label = _readTinyString(_io);
+
+          if (lang_code === "any") {
+            console.log("setting any label: " + label);
+            parameter.label = label;
+          } else {
+            console.log("setting lanugage label " + lang_code + " : " + label);
+            parameter.languageLabel[lang_code] = label;
+
+            // collect languages
+            collectLanguage(lang_code);
+          }
+
+          current = _io.pos;
+          peek_one = _io.readS1();
+        }
+        //parameter.label = _readTinyString(_io);
+        //if (RCPVerbose) console.log("parameter label: " + parameter.label);
         break;
+      }
+
+
+      case RcpTypes.ParameterOptions.DESCRIPTION: {
+
+        var current = _io.pos;
+        var peek_one = _io.readS1();
+
+        while (peek_one != 0) {
+          // rewind
+          _io.seek(current);
+
+          var lang_code = KaitaiStream.bytesToStr(_io.readBytes(3));
+          var label = _readShortString(_io);
+
+          if (lang_code === "any") {
+            console.log("setting any description: " + label);
+            parameter.description = label;
+          } else {
+            console.log("setting lanugage description " + lang_code + " : " + label);
+            parameter.languageLabel[lang_code] = label;
+
+            // collect languages
+            collectLanguage(lang_code);
+          }
+
+          current = _io.pos;
+          peek_one = _io.readS1();
+        }
+        //parameter.description = _readShortString(_io);
+        //if (RCPVerbose) console.log("parameter desc: " + parameter.description);
+        break;
+      }
+
 
       case RcpTypes.ParameterOptions.TAGS:
         parameter.tags = _readTinyString(_io);
@@ -1179,7 +1247,9 @@ ToiParameter = function(_id, _type) {
   // optionals
   this.value = null;
   this.label = null;
+  this.languageLabel = {};
   this.description = null;
+  this.lanugageDescription = {};
   this.tags = null;
   this.order = null;
   this.parentid = null;

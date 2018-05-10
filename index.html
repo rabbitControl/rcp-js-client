@@ -480,18 +480,16 @@
   client.setonclose(myonclose);
   client.setonerror(myerror);
 
-  function init() {
-    var host = window.location.hostname;
-    if (host == null || host == undefined || host == "") {
-      host = "localhost";
-    }
-    $('#hostInput').val(host);
+  languageAddedCB = function(lang, index) {
+    var os = $('<option value="' + index + '" id="langOption-' + index + '">' + lang + '</option>');
+    $('#langSelector').append(os);
+    $('#languageChooser').show();
   }
 
   function resetUI() {
     client.clear();
     $('#content').empty();
-    $('#head').show();
+    $('#login').show();
   }
 
   function myonclose() {
@@ -513,7 +511,16 @@
     // open a connection to server
     client.open($('#hostInput').val(), parseInt($('#portInput').val()));
 
-    $('#head').hide();
+    $('#login').hide();
+  }
+
+  function init() {
+    var host = window.location.hostname;
+    if (host == null || host == undefined || host == "") {
+      host = "localhost";
+    }
+    $('#hostInput').val(host);
+    $('#languageChooser').hide();
   }
 
 </script>
@@ -522,7 +529,7 @@
 
 <body onload="init()">
 
-  <div id="head" style="margin:10px;">
+  <div id="login" style="margin:10px;">
 
     <fieldset data-role="controlgroup" id="headGroup" data-type="horizontal">
     <label for="hostInput" id="labelHost"> Host: </label><input type="text" name="hostInput" id="hostInput" value="localhost" />
@@ -533,6 +540,16 @@
 
   </div>
 
+  <!-- language chooser -->
+  <div id="languageChooser" style="margin:10px;">
+
+    <fieldset data-role="controlgroup" id="languageChooserGroup">
+      <label for="langSelector" id="labelLangSelector"> Language: </label>
+      <select name="langSelector" id="langSelector">
+        <option value="0" id="langOption-0"> Any Language </option>
+      </select>
+    </fieldset>
+  </div>
 
   <!-- content container-->
   <div id="content" style="margin:10px;">
