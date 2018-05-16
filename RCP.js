@@ -16,6 +16,12 @@ collectLanguage = function(lang_code) {
   }
 }
 
+function flatten(arr) {
+  return arr.reduce(function (flat, toFlatten) {
+    return flat.concat(Array.isArray(toFlatten) ? flatten(toFlatten) : toFlatten);
+  }, []);
+}
+
 pushFloat64ToArrayBe = function(num, array) {
 
   // string length
@@ -242,6 +248,10 @@ _readTypedValue = function(_typeid, _io) {
     case RcpTypes.Datatype.RGB:
     case RcpTypes.Datatype.RGBA:
       return numToColor(_io.readU4be());
+
+    case RcpTypes.Datatype.FIXED_ARRAY:
+      break;
+    case RcpTypes.Datatype.DYNAMIC_ARRAY:
   }
 
   return null;
@@ -258,29 +268,30 @@ _writeTypedValue = function(_typeid, value, array) {
     // number types
     case RcpTypes.Datatype.INT8:
     case RcpTypes.Datatype.UINT8:
-      array.push(value);
+      array.push(parseInt(value));
       break;
     case RcpTypes.Datatype.INT16:
     case RcpTypes.Datatype.UINT16:
-      pushIn16ToArrayBe(value, array);
+      pushIn16ToArrayBe(parseInt(value), array);
       break;
     case RcpTypes.Datatype.INT32:
     case RcpTypes.Datatype.UINT32:
-      pushIn32ToArrayBe(value, array);
+      pushIn32ToArrayBe(parseInt(value), array);
       break;
     case RcpTypes.Datatype.INT64:
     case RcpTypes.Datatype.UINT64:
-      pushIn64ToArrayBe(value, array);
+      pushIn64ToArrayBe(parseInt(value), array);
       break;
     case RcpTypes.Datatype.FLOAT32:
-      pushFloat32ToArrayBe(value, array);
+      pushFloat32ToArrayBe(parseFloat(value), array);
       break;
     case RcpTypes.Datatype.FLOAT64:
-      pushFloat64ToArrayBe(value, array);
+      pushFloat64ToArrayBe(parseFloat(value), array);
       break;
 
     // string
     case RcpTypes.Datatype.STRING:
+      console.log("write long string: " + value);
       array = writeLongString(value, array);
       break;
 
@@ -856,7 +867,17 @@ TOIPacketDecoder.prototype._parseParameter = function(_io) {
 
     switch (dataid) {
       case RcpTypes.ParameterOptions.VALUE: {
-        parameter.value = _readTypedValue(type.typeid, _io);
+
+        if (type.typeid != RcpTypes.Datatype.FIXED_ARRAY) {
+          parameter.value = _readTypedValue(type.typeid, _io);
+        } else {
+
+          var v = [];
+          intoarray(v, 0, type.dimsizes, type.subtype.typeid, _io);
+
+          parameter.value = JSON.stringify(v);
+        }
+
         if (RCPVerbose) console.log("parameter value:  " + parameter.value);
         break;
       }
@@ -943,8 +964,8 @@ TOIPacketDecoder.prototype._parseParameter = function(_io) {
       case RcpTypes.ParameterOptions.WIDGET:
         // skip...
         console.log("widget not implemented, skipping...");
-		while (_io.readU1() != 0)
-		{}
+    		while (_io.readU1() != 0)
+    		{}
 
         break;
 
@@ -1010,6 +1031,10 @@ TOIPacketDecoder.prototype._parseTypeDefinition = function(_io) {
     // enum
     case RcpTypes.Datatype.ENUM:
       this._parseTypeEnum(type, _io);
+      break;
+
+    case RcpTypes.Datatype.FIXED_ARRAY:
+      this._parseTypeFixedArray(type, _io);
       break;
 
     default:
@@ -1116,6 +1141,88 @@ TOIPacketDecoder.prototype._parseTypeNumber = function(_type, _io) {
       default:
         // not a number data id!!
         throw "wrong data id for a number: " + dataid;
+    }
+  }
+}
+
+
+TOIPacketDecoder.prototype._parseTypeFixedArray = function(_type, _io) {
+  if (_type == null || _io == null) {
+    return;
+  }
+
+  if (!(_type instanceof ToiTypeDefinition)) {
+    return;
+  }
+
+  var type = _type;
+
+  if (RCPVerbose) console.log("parse fixed array");
+
+  // element type
+  type.subtype = this._parseTypeDefinition(_io);
+  if (RCPVerbose) console.log("subtype: " + JSON.stringify(type.subtype));
+
+  type.dimensions = _io.readU4be();
+  if (RCPVerbose) console.log("fixed array dimensions: " + type.dimensions);
+  type.dimsizes = [];
+
+  if (type.dimensions > 0) {
+    type.numBytes = 1;
+  } else {
+    type.numBytes = 0;
+  }
+
+  for (var i=0; i<type.dimensions; i++) {
+    var n = _io.readU4be();
+    type.numBytes *= n;
+    type.dimsizes.push(n);
+  }
+
+  if (RCPVerbose) console.log("fixed dim " + JSON.stringify(type.dimsizes));
+
+  // parse optionals
+  while (true) {
+
+    var dataid = _io.readU1();
+
+    if (dataid == TERMINATOR) {
+        break;
+    }
+
+    switch (dataid) {
+
+      case RcpTypes.FixedArrayOptions.DEFAULT:
+
+        var v = [];
+        intoarray(v, 0, type.dimsizes, type.subtype.typeid, _io);
+
+        // read amout of bytes
+        type.defaultValue = JSON.stringify(v);
+        if (RCPVerbose) console.log("parse default, default: " + type.defaultValue);
+        break;
+
+      default:
+        // not a number data id!!
+        throw "wrong data id for a ENUM: " + dataid;
+    }
+  }
+}
+
+
+function intoarray(array, dim, dimsizes, typeid, _io) {
+
+  if (dim >= dimsizes.length) {
+    return;
+  }
+
+  for (var i=0; i<dimsizes[dim]; i++) {
+
+    if (dim == dimsizes.length-1) {
+      array[i] = _readTypedValue(typeid, _io);
+    } else {
+      array[i] = [];
+      intoarray(array[i], dim+1, dimsizes, typeid, _io);
     }
   }
 }
@@ -1276,7 +1383,17 @@ ToiParameter.prototype.write = function(array) {
   // write optionals
   if (this.value != null) {
     array.push(RcpTypes.ParameterOptions.VALUE);
-    array = _writeTypedValue(this.type.typeid, this.value, array);
+    if (this.type.typeid != RcpTypes.Datatype.FIXED_ARRAY) {
+      array = _writeTypedValue(this.type.typeid, this.value, array);
+    } else {
+
+      var d = flatten(JSON.parse(this.value));
+      //flatten(d); // [1, 2, 3, 4, 5]
+      for (var i=0; i<d.length; i++) {
+        console.log("write: " + d[i]);
+        array = _writeTypedValue(this.type.subtype.typeid, d[i], array);
+      }
+    }
   }
 
   if (this.label != null) {
@@ -1394,7 +1511,16 @@ ToiTypeDefinition = function(_typeid) {
 ToiTypeDefinition.prototype = {};
 
 ToiTypeDefinition.prototype.cloneEmpty = function() {
-  return new ToiTypeDefinition(this.typeid);
+
+  var newTypeDef = new ToiTypeDefinition(this.typeid);
+  if (this.typeid == RcpTypes.Datatype.FIXED_ARRAY) {
+    newTypeDef.subtype = this.subtype;
+    newTypeDef.dimensions = this.dimensions;
+    newTypeDef.dimsizes = this.dimsizes;
+    newTypeDef.numBytes = this.numBytes;
+  }
+
+  return newTypeDef;
 }
 
 ToiTypeDefinition.prototype.update = function(type) {
@@ -1427,6 +1553,8 @@ ToiTypeDefinition.prototype.update = function(type) {
     // string
     case RcpTypes.Datatype.STRING:
     case RcpTypes.Datatype.ENUM:
+
+    case RcpTypes.Datatype.FIXED_ARRAY:
     default:
       break;
   }
@@ -1499,6 +1627,10 @@ ToiTypeDefinition.prototype.write = function(array) {
       array = this._writeEnum(array);
       break;
 
+    case RcpTypes.Datatype.FIXED_ARRAY:
+      array = this._writeFixedArray(array);
+      break;
+
     default:
       break;
   }
@@ -1527,6 +1659,35 @@ ToiTypeDefinition.prototype._writeString = function(array) {
 
   return array;
 }
+
+
+ToiTypeDefinition.prototype._writeFixedArray = function(array) {
+
+  // write subtype
+  this.subtype.write(array);
+
+  // write dim
+  pushIn32ToArrayBe(this.dimensions, array);
+
+  // write dim sizes
+  for (var i=0; i<this.dimsizes.length; i++) {
+    pushIn32ToArrayBe(this.dimsizes[i], array);
+  }
+
+
+  if (this.defaultValue != null) {
+    array.push(RcpTypes.StringOptions.DEFAULT);
+
+    var d = flatten(JSON.parse(this.defaultValue));
+    //flatten(d); // [1, 2, 3, 4, 5]
+    for (var i=0; i<d.length; i++) {
+      array = _writeTypedValue(this.subtype.typeid, d[i], array);
+    }
+  }
+
+  return array;
+}
+
 
 ToiTypeDefinition.prototype._writeEnum = function(array) {
 
