@@ -249,9 +249,9 @@ _readTypedValue = function(_typeid, _io) {
     case RcpTypes.Datatype.RGBA:
       return numToColor(_io.readU4be());
 
-    case RcpTypes.Datatype.FIXED_ARRAY:
+    case RcpTypes.Datatype.ARRAY:
       break;
-    case RcpTypes.Datatype.DYNAMIC_ARRAY:
+    case RcpTypes.Datatype.LIST:
   }
 
   return null;
@@ -868,12 +868,28 @@ TOIPacketDecoder.prototype._parseParameter = function(_io) {
     switch (dataid) {
       case RcpTypes.ParameterOptions.VALUE: {
 
-        if (type.typeid != RcpTypes.Datatype.FIXED_ARRAY) {
+        if (type.typeid != RcpTypes.Datatype.ARRAY) {
           parameter.value = _readTypedValue(type.typeid, _io);
         } else {
 
+          var dims = _io.readU4be();
+          dim_sizes = [];
+
+          for (var i=0; i<dims; i++) {
+            var n = _io.readU4be();
+            dim_sizes.push(n);
+          }
+
+          if (RCPVerbose) console.log("default array structure: " + JSON.stringify(dim_sizes));
+
+          // TODO:
+          // change: do not set dimensions in type... hack!!
+
+          type.dimensions = dims;
+          type.dimsizes = dim_sizes;
+
           var v = [];
-          intoarray(v, 0, type.dimsizes, type.subtype.typeid, _io);
+          intoarray(v, 0, dim_sizes, type.subtype.typeid, _io);
 
           parameter.value = JSON.stringify(v);
         }
@@ -1033,8 +1049,8 @@ TOIPacketDecoder.prototype._parseTypeDefinition = function(_io) {
       this._parseTypeEnum(type, _io);
       break;
 
-    case RcpTypes.Datatype.FIXED_ARRAY:
-      this._parseTypeFixedArray(type, _io);
+    case RcpTypes.Datatype.ARRAY:
+      this._parseTypeArray(type, _io);
       break;
 
     default:
@@ -1146,7 +1162,7 @@ TOIPacketDecoder.prototype._parseTypeNumber = function(_type, _io) {
 }
 
 
-TOIPacketDecoder.prototype._parseTypeFixedArray = function(_type, _io) {
+TOIPacketDecoder.prototype._parseTypeArray = function(_type, _io) {
   if (_type == null || _io == null) {
     return;
   }
@@ -1163,24 +1179,6 @@ TOIPacketDecoder.prototype._parseTypeFixedArray = function(_type, _io) {
   type.subtype = this._parseTypeDefinition(_io);
   if (RCPVerbose) console.log("subtype: " + JSON.stringify(type.subtype));
 
-  type.dimensions = _io.readU4be();
-  if (RCPVerbose) console.log("fixed array dimensions: " + type.dimensions);
-  type.dimsizes = [];
-
-  if (type.dimensions > 0) {
-    type.numBytes = 1;
-  } else {
-    type.numBytes = 0;
-  }
-
-  for (var i=0; i<type.dimensions; i++) {
-    var n = _io.readU4be();
-    type.numBytes *= n;
-    type.dimsizes.push(n);
-  }
-
-  if (RCPVerbose) console.log("fixed dim " + JSON.stringify(type.dimsizes));
-
   // parse optionals
   while (true) {
 
@@ -1192,14 +1190,56 @@ TOIPacketDecoder.prototype._parseTypeFixedArray = function(_type, _io) {
 
     switch (dataid) {
 
-      case RcpTypes.FixedArrayOptions.DEFAULT:
+      case RcpTypes.ArrayOptions.DEFAULT:
+
+        console.log("fixed array type default value...");
+
+        var dims = _io.readU4be();
+        if (RCPVerbose) console.log("fixed array dimensions: " + dims);
+        dim_sizes = [];
+
+        for (var i=0; i<dims; i++) {
+          var n = _io.readU4be();
+          dim_sizes.push(n);
+        }
+
+        if (RCPVerbose) console.log("default array structure: " + JSON.stringify(dim_sizes));
 
         var v = [];
-        intoarray(v, 0, type.dimsizes, type.subtype.typeid, _io);
+        intoarray(v, 0, dim_sizes, type.subtype.typeid, _io);
 
         // read amout of bytes
         type.defaultValue = JSON.stringify(v);
         if (RCPVerbose) console.log("parse default, default: " + type.defaultValue);
+        break;
+
+      case RcpTypes.ArrayOptions.STRUCTURE:
+
+        console.log("fixed array type structure...");
+
+        type.dimensions = _io.readU4be();
+        if (RCPVerbose) console.log("fixed array dimensions: " + type.dimensions);
+        type.dimsizes = [];
+
+        if (type.dimensions > 0) {
+          type.numBytes = 1;
+        } else {
+          type.numBytes = 0;
+        }
+
+        for (var i=0; i<type.dimensions; i++) {
+          var n = _io.readU4be();
+          type.numBytes *= n;
+          type.dimsizes.push(n);
+        }
+
+        if (RCPVerbose) console.log("fixed dim structure: " + JSON.stringify(type.dimsizes));
+
+        type.structure = {};
+        type.structure["dimensions"] = type.dimensions;
+        type.structure["dimsizes"] = type.dimsizes;
+        type.structure["numBytes"] = type.numBytes;
+
         break;
 
       default:
@@ -1383,9 +1423,20 @@ ToiParameter.prototype.write = function(array) {
   // write optionals
   if (this.value != null) {
     array.push(RcpTypes.ParameterOptions.VALUE);
-    if (this.type.typeid != RcpTypes.Datatype.FIXED_ARRAY) {
+
+    if (this.type.typeid != RcpTypes.Datatype.ARRAY) {
       array = _writeTypedValue(this.type.typeid, this.value, array);
     } else {
+
+      // TODO: re-use dimensions we have stored...
+
+      // write dim
+      pushIn32ToArrayBe(this.type.dimensions, array);
+
+      // write dim sizes
+      for (var i=0; i<this.type.dimsizes.length; i++) {
+        pushIn32ToArrayBe(this.type.dimsizes[i], array);
+      }
 
       var d = flatten(JSON.parse(this.value));
       //flatten(d); // [1, 2, 3, 4, 5]
@@ -1513,7 +1564,7 @@ ToiTypeDefinition.prototype = {};
 ToiTypeDefinition.prototype.cloneEmpty = function() {
 
   var newTypeDef = new ToiTypeDefinition(this.typeid);
-  if (this.typeid == RcpTypes.Datatype.FIXED_ARRAY) {
+  if (this.typeid == RcpTypes.Datatype.ARRAY) {
     newTypeDef.subtype = this.subtype;
     newTypeDef.dimensions = this.dimensions;
     newTypeDef.dimsizes = this.dimsizes;
@@ -1554,7 +1605,7 @@ ToiTypeDefinition.prototype.update = function(type) {
     case RcpTypes.Datatype.STRING:
     case RcpTypes.Datatype.ENUM:
 
-    case RcpTypes.Datatype.FIXED_ARRAY:
+    case RcpTypes.Datatype.ARRAY:
     default:
       break;
   }
@@ -1627,8 +1678,8 @@ ToiTypeDefinition.prototype.write = function(array) {
       array = this._writeEnum(array);
       break;
 
-    case RcpTypes.Datatype.FIXED_ARRAY:
-      array = this._writeFixedArray(array);
+    case RcpTypes.Datatype.ARRAY:
+      array = this._writeArray(array);
       break;
 
     default:
@@ -1661,28 +1712,34 @@ ToiTypeDefinition.prototype._writeString = function(array) {
 }
 
 
-ToiTypeDefinition.prototype._writeFixedArray = function(array) {
+ToiTypeDefinition.prototype._writeArray = function(array) {
 
   // write subtype
   this.subtype.write(array);
 
-  // write dim
-  pushIn32ToArrayBe(this.dimensions, array);
-
-  // write dim sizes
-  for (var i=0; i<this.dimsizes.length; i++) {
-    pushIn32ToArrayBe(this.dimsizes[i], array);
-  }
-
-
   if (this.defaultValue != null) {
+
     array.push(RcpTypes.StringOptions.DEFAULT);
+
+    // TODO: re-use dimensions we have stored...
+
+    // write dim
+    pushIn32ToArrayBe(this.dimensions, array);
+
+    // write dim sizes
+    for (var i=0; i<this.dimsizes.length; i++) {
+      pushIn32ToArrayBe(this.dimsizes[i], array);
+    }
 
     var d = flatten(JSON.parse(this.defaultValue));
     //flatten(d); // [1, 2, 3, 4, 5]
     for (var i=0; i<d.length; i++) {
       array = _writeTypedValue(this.subtype.typeid, d[i], array);
     }
+  }
+
+
+  if (this.structure != null) {
   }
 
   return array;

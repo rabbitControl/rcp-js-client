@@ -103,7 +103,7 @@
       case RcpTypes.Datatype.TINY_STRING:
       case RcpTypes.Datatype.SHORT_STRING:
       case RcpTypes.Datatype.STRING:
-      case RcpTypes.Datatype.FIXED_ARRAY:
+      case RcpTypes.Datatype.ARRAY:
       {
         var box = createTextBox(parameter);
         updateParam(parameter);
@@ -144,11 +144,9 @@
       }
         break;
 
-      case RcpTypes.Datatype.FIXED_ARRAY:
-      case RcpTypes.Datatype.DYNAMIC_ARRAY:
-
+      case RcpTypes.Datatype.LIST:
       default:
-        console.log("no such type...");
+        console.log("no such type: " + RcpTypes.Datatype[parameter.type.typeid]);
     }
   };
 

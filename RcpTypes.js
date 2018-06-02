@@ -13,9 +13,33 @@ var RcpTypes = (function() {
   RcpTypes.EnumOptions = Object.freeze({
     DEFAULT: 48,
     ENTRIES: 49,
+    MULTISELECT: 50,
 
     48: "DEFAULT",
     49: "ENTRIES",
+    50: "MULTISELECT",
+  });
+
+  RcpTypes.NumberboxOptions = Object.freeze({
+    PRECISION: 86,
+    FORMAT: 87,
+    STEPSIZE: 88,
+    CYCLIC: 89,
+
+    86: "PRECISION",
+    87: "FORMAT",
+    88: "STEPSIZE",
+    89: "CYCLIC",
+  });
+
+  RcpTypes.CustomtypeOptions = Object.freeze({
+    DEFAULT: 48,
+    UUID: 49,
+    CONFIG: 50,
+
+    48: "DEFAULT",
+    49: "UUID",
+    50: "CONFIG",
   });
 
   RcpTypes.WidgetOptions = Object.freeze({
@@ -91,31 +115,49 @@ var RcpTypes = (function() {
   });
 
   RcpTypes.Widgettype = Object.freeze({
-    TEXTBOX: 16,
-    NUMBERBOX: 17,
-    BUTTON: 18,
-    CHECKBOX: 19,
-    RADIOBUTTON: 20,
-    SLIDER: 21,
+    CUSTOMWIDGET: 1,
+    INFO: 16,
+    TEXTBOX: 17,
+    BANG: 18,
+    PRESS: 19,
+    TOGGLE: 20,
+    NUMBERBOX: 21,
     DIAL: 22,
-    COLORBOX: 23,
-    TABLE: 24,
-    TREEVIEW: 25,
+    SLIDER: 23,
+    SLIDER2D: 24,
+    RANGE: 25,
     DROPDOWN: 26,
-    XYFIELD: 31,
+    RADIOBUTTON: 27,
+    COLORBOX: 28,
+    TABLE: 29,
+    FILECHOOSER: 30,
+    DIRECTORYCHOOSER: 31,
+    IP: 32,
+    LIST: 32768,
+    LISTPAGE: 32769,
+    TABS: 32770,
 
-    16: "TEXTBOX",
-    17: "NUMBERBOX",
-    18: "BUTTON",
-    19: "CHECKBOX",
-    20: "RADIOBUTTON",
-    21: "SLIDER",
+    1: "CUSTOMWIDGET",
+    16: "INFO",
+    17: "TEXTBOX",
+    18: "BANG",
+    19: "PRESS",
+    20: "TOGGLE",
+    21: "NUMBERBOX",
     22: "DIAL",
-    23: "COLORBOX",
-    24: "TABLE",
-    25: "TREEVIEW",
+    23: "SLIDER",
+    24: "SLIDER2D",
+    25: "RANGE",
     26: "DROPDOWN",
-    31: "XYFIELD",
+    27: "RADIOBUTTON",
+    28: "COLORBOX",
+    29: "TABLE",
+    30: "FILECHOOSER",
+    31: "DIRECTORYCHOOSER",
+    32: "IP",
+    32768: "LIST",
+    32769: "LISTPAGE",
+    32770: "TABS",
   });
 
   RcpTypes.Command = Object.freeze({
@@ -146,24 +188,24 @@ var RcpTypes = (function() {
     2: "EXP2",
   });
 
-  RcpTypes.DynamicArrayOptions = Object.freeze({
-    DEFAULT: 48,
+  RcpTypes.DialOptions = Object.freeze({
+    CYCLIC: 86,
 
-    48: "DEFAULT",
+    86: "CYCLIC",
   });
 
   RcpTypes.LabelPosition = Object.freeze({
-    LEFT: 0,
-    RIGHT: 1,
-    TOP: 2,
-    BOTTOM: 3,
-    CENTER: 4,
+    LEFT: 1,
+    RIGHT: 2,
+    TOP: 3,
+    BOTTOM: 4,
+    CENTER: 5,
 
-    0: "LEFT",
-    1: "RIGHT",
-    2: "TOP",
-    3: "BOTTOM",
-    4: "CENTER",
+    1: "LEFT",
+    2: "RIGHT",
+    3: "TOP",
+    4: "BOTTOM",
+    5: "CENTER",
   });
 
   RcpTypes.UriOptions = Object.freeze({
@@ -174,6 +216,12 @@ var RcpTypes = (function() {
     48: "DEFAULT",
     49: "FILTER",
     50: "SCHEMA",
+  });
+
+  RcpTypes.SliderOptions = Object.freeze({
+    HORIZONTAL: 86,
+
+    86: "HORIZONTAL",
   });
 
   RcpTypes.ClientStatus = Object.freeze({
@@ -190,11 +238,32 @@ var RcpTypes = (function() {
 
   RcpTypes.StringOptions = Object.freeze({
     DEFAULT: 48,
+    REGULAR_EXPRESSION: 49,
 
     48: "DEFAULT",
+    49: "REGULAR_EXPRESSION",
+  });
+
+  RcpTypes.ArrayOptions = Object.freeze({
+    DEFAULT: 48,
+    STRUCTURE: 49,
+
+    48: "DEFAULT",
+    49: "STRUCTURE",
+  });
+
+  RcpTypes.NumberboxFormat = Object.freeze({
+    DEC: 1,
+    HEX: 2,
+    BIN: 3,
+
+    1: "DEC",
+    2: "HEX",
+    3: "BIN",
   });
 
   RcpTypes.Datatype = Object.freeze({
+    CUSTOMTYPE: 1,
     BOOLEAN: 16,
     INT8: 17,
     UINT8: 18,
@@ -216,14 +285,15 @@ var RcpTypes = (function() {
     RGB: 34,
     RGBA: 35,
     ENUM: 36,
-    FIXED_ARRAY: 37,
-    DYNAMIC_ARRAY: 38,
+    ARRAY: 37,
+    LIST: 38,
     BANG: 39,
     GROUP: 40,
     URI: 42,
     IPV4: 43,
     IPV6: 44,
 
+    1: "CUSTOMTYPE",
     16: "BOOLEAN",
     17: "INT8",
     18: "UINT8",
@@ -245,8 +315,8 @@ var RcpTypes = (function() {
     34: "RGB",
     35: "RGBA",
     36: "ENUM",
-    37: "FIXED_ARRAY",
-    38: "DYNAMIC_ARRAY",
+    37: "ARRAY",
+    38: "LIST",
     39: "BANG",
     40: "GROUP",
     42: "URI",
@@ -294,10 +364,28 @@ var RcpTypes = (function() {
     18: "DATA",
   });
 
-  RcpTypes.FixedArrayOptions = Object.freeze({
+  RcpTypes.TextboxOptions = Object.freeze({
+    MULTILINE: 86,
+    WORDWRAP: 87,
+    PASSWORD: 88,
+
+    86: "MULTILINE",
+    87: "WORDWRAP",
+    88: "PASSWORD",
+  });
+
+  RcpTypes.ListOptions = Object.freeze({
     DEFAULT: 48,
 
     48: "DEFAULT",
+  });
+
+  RcpTypes.CustomwidgetOptions = Object.freeze({
+    UUID: 86,
+    CONFIG: 87,
+
+    86: "UUID",
+    87: "CONFIG",
   });
 
   function RcpTypes(_io, _parent, _root) {
@@ -309,6 +397,22 @@ var RcpTypes = (function() {
   }
   RcpTypes.prototype._read = function() {
   }
+
+  var TinyString = RcpTypes.TinyString = (function() {
+    function TinyString(_io, _parent, _root) {
+      this._io = _io;
+      this._parent = _parent;
+      this._root = _root || this;
+
+      this._read();
+    }
+    TinyString.prototype._read = function() {
+      this.myLen = this._io.readU1();
+      this.data = KaitaiStream.bytesToStr(this._io.readBytes(this.myLen), "UTF-8");
+    }
+
+    return TinyString;
+  })();
 
   var ShortString = RcpTypes.ShortString = (function() {
     function ShortString(_io, _parent, _root) {
@@ -324,22 +428,6 @@ var RcpTypes = (function() {
     }
 
     return ShortString;
-  })();
-
-  var Userdata = RcpTypes.Userdata = (function() {
-    function Userdata(_io, _parent, _root) {
-      this._io = _io;
-      this._parent = _parent;
-      this._root = _root || this;
-
-      this._read();
-    }
-    Userdata.prototype._read = function() {
-      this.myLen = this._io.readU4be();
-      this.data = this._io.readBytes(this.myLen);
-    }
-
-    return Userdata;
   })();
 
   var LongString = RcpTypes.LongString = (function() {
@@ -358,36 +446,20 @@ var RcpTypes = (function() {
     return LongString;
   })();
 
-  var Id = RcpTypes.Id = (function() {
-    function Id(_io, _parent, _root) {
+  var Userdata = RcpTypes.Userdata = (function() {
+    function Userdata(_io, _parent, _root) {
       this._io = _io;
       this._parent = _parent;
       this._root = _root || this;
 
       this._read();
     }
-    Id.prototype._read = function() {
-      this.myLen = this._io.readU1();
+    Userdata.prototype._read = function() {
+      this.myLen = this._io.readU4be();
       this.data = this._io.readBytes(this.myLen);
     }
 
-    return Id;
-  })();
-
-  var TinyString = RcpTypes.TinyString = (function() {
-    function TinyString(_io, _parent, _root) {
-      this._io = _io;
-      this._parent = _parent;
-      this._root = _root || this;
-
-      this._read();
-    }
-    TinyString.prototype._read = function() {
-      this.myLen = this._io.readU1();
-      this.data = KaitaiStream.bytesToStr(this._io.readBytes(this.myLen), "UTF-8");
-    }
-
-    return TinyString;
+    return Userdata;
   })();
 
   return RcpTypes;
