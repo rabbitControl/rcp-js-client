@@ -1,6 +1,6 @@
 
 // flag to control some verbose logging
-var RCPVerbose = true;
+var RCPVerbose = false;
 var TERMINATOR = 0;
 
 var languages = [];
@@ -621,6 +621,8 @@ TOISocket.prototype._onmessage = function(ev) {
 
       fileReader.onload = function () {
 
+          if (RCPVerbose) console.log("received: " + ev.data);
+
           if (this._.received) {
             this._.received(ev.data);
           }
@@ -635,7 +637,7 @@ TOISocket.prototype._onmessage = function(ev) {
 
   } else if (ev.data instanceof ArrayBuffer) {
 
-      //console.log("received: " + ev.data);
+      if (RCPVerbose) console.log("received: " + ev.data);
 
       if (this._.received) {
         this._.received(ev.data);
@@ -684,7 +686,7 @@ TOISocket.prototype.open = function(address, port, ssl) {
 
 TOISocket.prototype.send = function(message) {
 
-  if (RCPVerbose) console.log("this.webSocket.readyState: " + this.webSocket.readyState);
+  console.log("this.webSocket.readyState: " + this.webSocket.readyState);
   if (RCPVerbose) console.log("typeof message: " + typeof message + " : " + (message instanceof Uint8Array) + ": " + message.constructor.name);
 
   if (this.webSocket.readyState == 1) {
