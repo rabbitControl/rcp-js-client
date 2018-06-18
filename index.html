@@ -67,18 +67,20 @@
       case RcpTypes.Datatype.FLOAT64:
       {
         var box;
+        var id = transformParamId(parameter.id);
+
         if (parameter.type.min != null && parameter.type.max != null) {
+
           box = createSlider(parameter);
+          var input = $("#param-" + id);
 
-          var input = $("#param-" + transformParamId(parameter.id));
-
+          // set min/max
           input.attr("min", parameter.type.min);
           input.attr("max", parameter.type.max);
 
           if (parameter.type.multipleof != null) {
             input.attr("step", parameter.type.multipleof);
           }
-
           if (parameter.type.unit != null) {
             alert("unit: " + parameter.type.unit);
           }
@@ -88,20 +90,54 @@
           input.slider().slider('refresh');
 
         } else {
+          // no min-max create number box
           box = createNumberBox(parameter);
           updateParam(parameter);
         }
 
         // last value CB
-        var id = transformParamId(parameter.id);
         $("#param-"+id).change(function() {
           valueChange(parameter.id, $("#param-"+id).val());
         });
       }
         break;
 
-      case RcpTypes.Datatype.TINY_STRING:
-      case RcpTypes.Datatype.SHORT_STRING:
+      case RcpTypes.Datatype.RANGE:
+
+        var id = transformParamId(parameter.id);
+        var box = createRangeSlider(parameter);
+
+        var input_a = $("#param-" + id + "-a");
+        var input_b = $("#param-" + id + "-b");
+
+        if (parameter.type.elementType.min != null && parameter.type.elementType.max != null) {
+          input_a.attr("min", parameter.type.elementType.min);
+          input_a.attr("max", parameter.type.elementType.max);
+          input_b.attr("min", parameter.type.elementType.min);
+          input_b.attr("max", parameter.type.elementType.max);
+        } else {
+          console.log("no min/max for RANGE!!");
+        }
+
+        updateParam(parameter);
+
+        // last value CB
+        input_a.change(function() {
+          var value = {};
+          value.v1 = $("#param-"+id+"-a").val();
+          value.v2 = $("#param-"+id+"-b").val();
+          valueChange(parameter.id, value);
+        });
+
+        input_b.change(function() {
+          var value = {};
+          value.v1 = $("#param-"+id+"-a").val();
+          value.v2 = $("#param-"+id+"-b").val();
+          valueChange(parameter.id, value);
+        });
+
+        break;
+
       case RcpTypes.Datatype.STRING:
       case RcpTypes.Datatype.ARRAY:
       {
@@ -178,7 +214,19 @@
             break;
           }
         }
-      } else {
+      }
+      else if (parameter.type.typeid == RcpTypes.Datatype.RANGE) {
+
+          var input_a = $('#param-' + id + "-a");
+          var input_b = $('#param-' + id + "-b");
+
+          input_a.val(parameter.value.v1);
+          input_b.val(parameter.value.v2);
+
+          input_a.slider().slider('refresh');
+          input_b.slider().slider('refresh');
+      }
+      else {
         input.val(parameter.value);
       }
 
@@ -188,12 +236,21 @@
     }
 
     if (parameter.label) {
+
       console.log("setting label: " + id + " : " + parameter.label );
-      var label = $('#label-' + id);
 
-      console.log(JSON.stringify(label));
+      if (parameter.type.typeid == RcpTypes.Datatype.RANGE) {
 
-      label.text(parameter.label + ":");
+        var label_a = $('#label-' + id + "-a");
+        var label_b = $('#label-' + id + "-b");
+
+        label_a.text(parameter.label + ":");
+        label_b.text(parameter.label + ":");
+      }
+      else {
+        var label = $('#label-' + id);
+        label.text(parameter.label + ":");
+      }
     }
 
     if (parameter.description) {
@@ -324,7 +381,10 @@
     console.log("create slider: " + id);
 
     var newSet = '<fieldset data-role="controlgroup" id="cbGroup' + id + '"></fieldset>';
-    var newBox = $('<label for="param-' + id + '" id="label-' + id + '" > slider: </label> <input id="param-' + id + '" type="number" data-type="range" data-highlight="true" min="0" max="100" step="1" value="0">');
+    var newBox = $('<label for="param-' + id + '" id="label-' + id + '" >\
+                      slider:\
+                    </label>\
+                    <input id="param-' + id + '" type="number" data-type="range" data-highlight="true" min="0" max="100" step="1" value="0">');
 
     if (parameter.parentid != null && parameter.parentid != 0) {
 
@@ -350,6 +410,37 @@
 
     var newSet = '<fieldset data-role="controlgroup" id="cbGroup' + id + '"></fieldset>';
     var newBox = $('<label for="param-' + id + '" id="label-' + id + '" > Number: </label> <input type="number" data-clear-btn="false" name="param-'+ id +'" id="param-' + id + '" value="0" />');
+
+    if (parameter.parentid != null && parameter.parentid != 0) {
+
+      container_name = "param-" + transformParamId(parameter.parentid) + "-list";
+
+      $("#" + container_name).append(newSet);
+    } else {
+      $('#content').append(newSet);
+    }
+
+    $("#cbGroup" + id).append(newBox).trigger('create');
+    $('<hr>').appendTo( "#cbGroup" + id );
+
+    return newBox;
+  }
+
+  function createRangeSlider(parameter) {
+
+    var id = transformParamId(parameter.id);
+
+    console.log("create range-slider: " + id);
+
+    var newSet = '<fieldset data-role="controlgroup" id="cbGroup' + id + '"></fieldset>';
+    var newBox = $('<form>\
+        <div data-role="rangeslider">\
+            <label for="param-' + id + '-a" id="label-' + id + '-a">Rangeslider:</label>\
+            <input name="param-' + id + '-a" id="param-' + id + '-a" min="0" max="100" value="40" type="range">\
+            <label for="param-' + id + '-b" id="label-' + id + '-b">Rangeslider:</label>\
+            <input name="param-' + id + '-b" id="param-' + id + '-b" min="0" max="100" value="80" type="range">\
+        </div>\
+    </form>');
 
     if (parameter.parentid != null && parameter.parentid != 0) {
 

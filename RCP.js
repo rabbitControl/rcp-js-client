@@ -194,17 +194,22 @@ _readShortString = function(_io) {
   return strObj.data;
 }
 
-_readTypedValue = function(_typeid, _io) {
+_readTypedValue = function(_type, _io) {
 
-  if (_typeid == null || _typeid == undefined) {
-    throw "no _typeid provided";
+  if (_type == null || _type == undefined) {
+    throw "no _type provided";
+  }
+
+  if (!(_type instanceof ToiTypeDefinition)) {
+    throw "not a ToiTypeDefinition"
+    return;
   }
 
   if (_io == null || !(_io instanceof KaitaiStream)) {
     throw "no KaitaiStream provided";
   }
 
-  switch (_typeid) {
+  switch (_type.typeid) {
 
     case RcpTypes.Datatype.BOOLEAN:
         return _io.readU1() > 0;
@@ -230,6 +235,14 @@ _readTypedValue = function(_typeid, _io) {
         return _io.readF4be();
     case RcpTypes.Datatype.FLOAT64:
         return _io.readF8be();
+
+    case RcpTypes.Datatype.RANGE:
+        var v1 = _readTypedValue(_type.elementType, _io);
+        var v2 = _readTypedValue(_type.elementType, _io);
+        var value = {};
+        value.v1 = v1;
+        value.v2 = v2;
+        return value;
 
     // string
     case RcpTypes.Datatype.STRING:
@@ -257,9 +270,9 @@ _readTypedValue = function(_typeid, _io) {
   return null;
 }
 
-_writeTypedValue = function(_typeid, value, array) {
+_writeTypedValue = function(_type, value, array) {
 
-  switch (_typeid) {
+  switch (_type.typeid) {
 
     case RcpTypes.Datatype.BOOLEAN:
       array.push(value > 0);
@@ -287,6 +300,11 @@ _writeTypedValue = function(_typeid, value, array) {
       break;
     case RcpTypes.Datatype.FLOAT64:
       pushFloat64ToArrayBe(parseFloat(value), array);
+      break;
+
+    case RcpTypes.Datatype.RANGE:
+      _writeTypedValue(_type.elementType, value.v1, array);
+      _writeTypedValue(_type.elementType, value.v2, array);
       break;
 
     // string
@@ -871,7 +889,7 @@ TOIPacketDecoder.prototype._parseParameter = function(_io) {
       case RcpTypes.ParameterOptions.VALUE: {
 
         if (type.typeid != RcpTypes.Datatype.ARRAY) {
-          parameter.value = _readTypedValue(type.typeid, _io);
+          parameter.value = _readTypedValue(type, _io);
         } else {
 
           var dims = _io.readU4be();
@@ -891,7 +909,7 @@ TOIPacketDecoder.prototype._parseParameter = function(_io) {
           type.dimsizes = dim_sizes;
 
           var v = [];
-          intoarray(v, 0, dim_sizes, type.subtype.typeid, _io);
+          intoarray(v, 0, dim_sizes, type.subtype, _io);
 
           parameter.value = JSON.stringify(v);
         }
@@ -1038,6 +1056,11 @@ TOIPacketDecoder.prototype._parseTypeDefinition = function(_io) {
       this._parseTypeNumber(type, _io);
       break;
 
+    // range
+    case RcpTypes.Datatype.RANGE:
+      this._parseTypeRange(type, _io);
+      break;
+
     // string
     case RcpTypes.Datatype.STRING:
     // color
@@ -1093,7 +1116,7 @@ TOIPacketDecoder.prototype._parseTypeDefault = function(_type, _io) {
     switch (dataid) {
 
       case RcpTypes.StringOptions.DEFAULT:
-        type.defaultValue = _readTypedValue(_type.typeid, _io);
+        type.defaultValue = _readTypedValue(_type, _io);
         if (RCPVerbose) console.log("parse default, default: " + type.defaultValue);
         break;
 
@@ -1130,19 +1153,19 @@ TOIPacketDecoder.prototype._parseTypeNumber = function(_type, _io) {
     switch (dataid) {
 
       case RcpTypes.NumberOptions.DEFAULT:
-        type.defaultValue = _readTypedValue(_type.typeid, _io);
+        type.defaultValue = _readTypedValue(_type, _io);
         if (RCPVerbose) console.log("number default: " + type.defaultValue);
         break;
       case RcpTypes.NumberOptions.MINIMUM:
-        type.min = _readTypedValue(_type.typeid, _io);
+        type.min = _readTypedValue(_type, _io);
         if (RCPVerbose) console.log("number min: " + type.min);
         break;
       case RcpTypes.NumberOptions.MAXIMUM:
-        type.max = _readTypedValue(_type.typeid, _io);
+        type.max = _readTypedValue(_type, _io);
         if (RCPVerbose) console.log("number max: " + type.max);
         break;
       case RcpTypes.NumberOptions.MULTIPLEOF:
-        type.multipleof = _readTypedValue(_type.typeid, _io);
+        type.multipleof = _readTypedValue(_type, _io);
         if (RCPVerbose) console.log("number mult: " + type.multipleof);
         break;
 
@@ -1163,6 +1186,24 @@ TOIPacketDecoder.prototype._parseTypeNumber = function(_type, _io) {
   }
 }
 
+TOIPacketDecoder.prototype._parseTypeRange = function(_type, _io) {
+
+  if (_type == null || _io == null) {
+    return;
+  }
+
+  if (!(_type instanceof ToiTypeDefinition)) {
+    return;
+  }
+
+  if (RCPVerbose) console.log("parse range options");
+
+  var element_type_definition = this._parseTypeDefinition(_io);
+  _type.elementType = element_type_definition;
+
+  // parse default options
+  this._parseTypeDefault(_type, _io);
+}
 
 TOIPacketDecoder.prototype._parseTypeArray = function(_type, _io) {
   if (_type == null || _io == null) {
@@ -1208,7 +1249,7 @@ TOIPacketDecoder.prototype._parseTypeArray = function(_type, _io) {
         if (RCPVerbose) console.log("default array structure: " + JSON.stringify(dim_sizes));
 
         var v = [];
-        intoarray(v, 0, dim_sizes, type.subtype.typeid, _io);
+        intoarray(v, 0, dim_sizes, type.subtype, _io);
 
         // read amout of bytes
         type.defaultValue = JSON.stringify(v);
@@ -1252,7 +1293,7 @@ TOIPacketDecoder.prototype._parseTypeArray = function(_type, _io) {
 }
 
 
-function intoarray(array, dim, dimsizes, typeid, _io) {
+function intoarray(array, dim, dimsizes, type, _io) {
 
   if (dim >= dimsizes.length) {
     return;
@@ -1261,10 +1302,10 @@ function intoarray(array, dim, dimsizes, typeid, _io) {
   for (var i=0; i<dimsizes[dim]; i++) {
 
     if (dim == dimsizes.length-1) {
-      array[i] = _readTypedValue(typeid, _io);
+      array[i] = _readTypedValue(type, _io);
     } else {
       array[i] = [];
-      intoarray(array[i], dim+1, dimsizes, typeid, _io);
+      intoarray(array[i], dim+1, dimsizes, type, _io);
     }
   }
 }
@@ -1427,7 +1468,7 @@ ToiParameter.prototype.write = function(array) {
     array.push(RcpTypes.ParameterOptions.VALUE);
 
     if (this.type.typeid != RcpTypes.Datatype.ARRAY) {
-      array = _writeTypedValue(this.type.typeid, this.value, array);
+      array = _writeTypedValue(this.type, this.value, array);
     } else {
 
       // TODO: re-use dimensions we have stored...
@@ -1444,7 +1485,7 @@ ToiParameter.prototype.write = function(array) {
       //flatten(d); // [1, 2, 3, 4, 5]
       for (var i=0; i<d.length; i++) {
         console.log("write: " + d[i]);
-        array = _writeTypedValue(this.type.subtype.typeid, d[i], array);
+        array = _writeTypedValue(this.type.subtype, d[i], array);
       }
     }
   }
@@ -1566,11 +1607,15 @@ ToiTypeDefinition.prototype = {};
 ToiTypeDefinition.prototype.cloneEmpty = function() {
 
   var newTypeDef = new ToiTypeDefinition(this.typeid);
+
   if (this.typeid == RcpTypes.Datatype.ARRAY) {
-    newTypeDef.subtype = this.subtype;
+    newTypeDef.subtype = this.subtype.cloneEmpty();
     newTypeDef.dimensions = this.dimensions;
     newTypeDef.dimsizes = this.dimsizes;
     newTypeDef.numBytes = this.numBytes;
+  }
+  else if (this.typeid == RcpTypes.Datatype.RANGE) {
+    newTypeDef.elementType = this.elementType.cloneEmpty();
   }
 
   return newTypeDef;
@@ -1671,6 +1716,10 @@ ToiTypeDefinition.prototype.write = function(array) {
       array = this._writeNumber(array);
       break;
 
+    case RcpTypes.Datatype.RANGE:
+      array = this._writeRange(array);
+      break;
+
     // string
     case RcpTypes.Datatype.STRING:
       array = this._writeString(array);
@@ -1736,7 +1785,7 @@ ToiTypeDefinition.prototype._writeArray = function(array) {
     var d = flatten(JSON.parse(this.defaultValue));
     //flatten(d); // [1, 2, 3, 4, 5]
     for (var i=0; i<d.length; i++) {
-      array = _writeTypedValue(this.subtype.typeid, d[i], array);
+      array = _writeTypedValue(this.subtype, d[i], array);
     }
   }
 
@@ -1763,26 +1812,39 @@ ToiTypeDefinition.prototype._writeEnum = function(array) {
   return array;
 }
 
+ToiTypeDefinition.prototype._writeRange = function(array) {
+
+  // write element type
+  this.elementType.write(array);
+
+  if (this.defaultValue != null) {
+    array.push(RcpTypes.BooleanOptions.DEFAULT);
+    _writeTypedValue(this, this.defaultValue, array);
+  }
+
+  return array;
+}
+
 ToiTypeDefinition.prototype._writeNumber = function(array) {
 
   if (this.defaultValue != null) {
     array.push(RcpTypes.NumberOptions.DEFAULT);
-    array = _writeTypedValue(this.typeid, this.defaultValue, array);
+    array = _writeTypedValue(this, this.defaultValue, array);
   }
 
   if (this.min != null) {
     array.push(RcpTypes.NumberOptions.MINIMUM);
-    array = _writeTypedValue(this.typeid, this.min, array);
+    array = _writeTypedValue(this, this.min, array);
   }
 
   if (this.max != null) {
     array.push(RcpTypes.NumberOptions.MAXIMUM);
-    array = _writeTypedValue(this.typeid, this.max, array);
+    array = _writeTypedValue(this, this.max, array);
   }
 
   if (this.multipleof != null) {
     array.push(RcpTypes.NumberOptions.MULTIPLEOF);
-    array = _writeTypedValue(this.typeid, this.multipleof, array);
+    array = _writeTypedValue(this, this.multipleof, array);
   }
 
   if (this.scale != null) {
