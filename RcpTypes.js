@@ -43,19 +43,13 @@ var RcpTypes = (function() {
   });
 
   RcpTypes.WidgetOptions = Object.freeze({
-    TYPE: 80,
-    ENABLED: 81,
-    VISIBLE: 82,
-    LABEL_VISIBLE: 83,
-    VALUE_VISIBLE: 84,
-    LABEL_POSITION: 85,
+    ENABLED: 80,
+    LABEL_VISIBLE: 81,
+    VALUE_VISIBLE: 82,
 
-    80: "TYPE",
-    81: "ENABLED",
-    82: "VISIBLE",
-    83: "LABEL_VISIBLE",
-    84: "VALUE_VISIBLE",
-    85: "LABEL_POSITION",
+    80: "ENABLED",
+    81: "LABEL_VISIBLE",
+    82: "VALUE_VISIBLE",
   });
 
   RcpTypes.ColorOptions = Object.freeze({
@@ -194,6 +188,12 @@ var RcpTypes = (function() {
     86: "CYCLIC",
   });
 
+  RcpTypes.RangeOptions = Object.freeze({
+    DEFAULT: 48,
+
+    48: "DEFAULT",
+  });
+
   RcpTypes.LabelPosition = Object.freeze({
     LEFT: 1,
     RIGHT: 2,
@@ -292,6 +292,7 @@ var RcpTypes = (function() {
     URI: 42,
     IPV4: 43,
     IPV6: 44,
+    RANGE: 45,
 
     1: "CUSTOMTYPE",
     16: "BOOLEAN",
@@ -322,6 +323,7 @@ var RcpTypes = (function() {
     42: "URI",
     43: "IPV4",
     44: "IPV6",
+    45: "RANGE",
   });
 
   RcpTypes.NumberOptions = Object.freeze({
@@ -376,8 +378,12 @@ var RcpTypes = (function() {
 
   RcpTypes.ListOptions = Object.freeze({
     DEFAULT: 48,
+    MINIMUM: 49,
+    MAXIMUM: 50,
 
     48: "DEFAULT",
+    49: "MINIMUM",
+    50: "MAXIMUM",
   });
 
   RcpTypes.CustomwidgetOptions = Object.freeze({
