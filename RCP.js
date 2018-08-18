@@ -1575,6 +1575,10 @@ ToiParameter.prototype.update = function(parameter) {
   if (parameter.order != null) {
     this.order = parameter.order;
   }
+  
+  if (parameter.parentid != null) {
+    this.parentid = parameter.parentid;
+  }
 
   if (parameter.widget != null) {
     console.log("widget ignored for now");
