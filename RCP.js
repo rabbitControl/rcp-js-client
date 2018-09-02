@@ -1140,6 +1140,13 @@ TOIPacketDecoder.prototype._parseTypeNumber = function(_type, _io) {
   if (RCPVerbose) console.log("parse number options");
 
   var type = _type;
+  switch (type.typeid) {
+	case RcpTypes.Datatype.FLOAT32:
+    case RcpTypes.Datatype.FLOAT64:
+		type.multipleof = 0.01; break;
+	default:
+		type.multipleof = 1; break;
+  }
 
   // parse optionals
   while (true) {
